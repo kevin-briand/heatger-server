@@ -5,6 +5,12 @@
     "USERNAME":"",
     "PASSWORD":""
   },
+  "network": {
+    "enabled": false,
+    "ip": [
+      "127.0.0.1"
+    ]
+  },
   "i2c": {
     "temperature": {
       "enabled": false
@@ -18,8 +24,7 @@
   },
   "zone1": {
     "name": "",
-    "clock_enabled": true,
-    "network_enabled": true,
+    "enabled": true,
     "gpio_eco": 16,
     "gpio_frostfree": 17,
     "prog": [

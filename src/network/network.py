@@ -1,11 +1,19 @@
 import platform
 import subprocess
 
+from src.localStorage.config import Config
+from src.network.consts import NETWORK, IP
+from src.network.mqtt.homeAssistant.homeAssistant import HomeAssistant
+from src.shared.consts.consts import ENABLED
+
 
 class Network:
-    def __init__(self, ips_list, scan_activated=False):
-        self.ips_list = ips_list
-        self.scan_activated = scan_activated
+    def __init__(self):
+        config = Config().get_config().get(NETWORK)
+        self.ips_list = config.get(IP)
+        self.scan_activated = config.get(ENABLED)
+        self.mqtt = HomeAssistant()
+        self.mqtt.start()
 
     def scan(self):
         ip_found = False

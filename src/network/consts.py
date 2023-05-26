@@ -1,0 +1,2 @@
+NETWORK = 'network'
+IP = 'ip'
