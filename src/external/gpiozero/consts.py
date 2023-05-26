@@ -1,0 +1,2 @@
+CLASSNAME = 'GPIO'
+WINDOWS = 'windows'

@@ -1,0 +1,38 @@
+{
+  "MQTT": {
+    "HOST":"",
+    "PORT":0,
+    "USERNAME":"",
+    "PASSWORD":""
+  },
+  "i2c": {
+    "temperature": {
+      "enabled": false
+    },
+    "screen": {
+      "enabled": false
+    },
+    "io": {
+      "enabled": false
+    }
+  },
+  "zone1": {
+    "name": "",
+    "clock_enabled": true,
+    "network_enabled": true,
+    "gpio_eco": 16,
+    "gpio_frostfree": 17,
+    "prog": [
+      {
+        "day": 0,
+        "hour": "12:00",
+        "order": 0
+      },
+      {
+        "day": 1,
+        "hour": "12:00",
+        "order": 1
+      }
+    ]
+  }
+}

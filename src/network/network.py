@@ -2,12 +2,6 @@ import platform
 import subprocess
 
 
-def ping(ip: str):
-    param = '-n' if platform.system().lower() == 'windows' else '-c'
-    command = ['ping', param, '1', ip]
-    return subprocess.call(command) == 0
-
-
 class Network:
     def __init__(self, ips_list, scan_activated=False):
         self.ips_list = ips_list
@@ -17,6 +11,12 @@ class Network:
         ip_found = False
         while not ip_found and self.scan_activated:
             for ip in self.ips_list:
-                if ping(ip):
+                if Network.ping(ip):
                     print(F'ip {ip} found !')
                     ip_found = True
+
+    @staticmethod
+    def ping(ip: str):
+        param = '-n' if platform.system().lower() == 'windows' else '-c'
+        command = ['ping', param, '1', ip]
+        return subprocess.call(command) == 0

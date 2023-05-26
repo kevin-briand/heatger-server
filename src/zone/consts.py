@@ -1,0 +1,8 @@
+CLASSNAME = 'Zone'
+PROG = 'prog'
+ZONE = 'zone'
+NAME = 'name'
+CLOCK_ENABLED = 'clock_enabled'
+NETWORK_ENABLED = 'network_enabled'
+GPIO_ECO = 'gpio_eco'
+GPIO_FROSTFREE = 'gpio_frostfree'

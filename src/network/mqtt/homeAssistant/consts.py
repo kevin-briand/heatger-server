@@ -1,0 +1,7 @@
+DISCOVERY_PREFIX = 'homeassistant/'
+SENSOR = DISCOVERY_PREFIX + 'sensor/'
+DEVICE_IDENTIFIER = 'heatger'
+DEVICE_MANUFACTURER = 'firedream'
+DEVICE_NAME = 'heatger'
+CLASS_TEMPERATURE = 'temperature'
+CLASSNAME = 'HomeAssistant'

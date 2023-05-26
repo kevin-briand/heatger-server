@@ -1,7 +1,11 @@
 import platform
 
+from src.external.gpiozero.consts import CLASSNAME, WINDOWS
+from src.shared.message.message import info
+
 
 class Gpio:
-    def set_pin(self, addr: int, status: bool):
-        if platform.system().lower() == 'windows':
-            print('set pin : ' + str(addr) + ' to ' + 'on' if status else 'off')
+    @staticmethod
+    def set_pin(addr: int, status: bool):
+        if platform.system().lower() == WINDOWS:
+            info(CLASSNAME, F'set pin : {str(addr)} to {"on" if status else "off"}')
