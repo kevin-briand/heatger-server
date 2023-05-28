@@ -7,10 +7,10 @@ class Orders(Enum):
     FROSTFREE = 2
 
     @staticmethod
-    def to_order(zone: int):
-        if zone == Orders.COMFORT.value:
+    def to_order(order_num: int):
+        if order_num == Orders.COMFORT.value:
             return Orders.COMFORT
-        elif zone == Orders.ECO.value:
+        elif order_num == Orders.ECO.value:
             return Orders.ECO
         else:
             return Orders.FROSTFREE

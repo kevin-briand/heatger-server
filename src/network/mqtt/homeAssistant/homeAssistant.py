@@ -10,7 +10,7 @@ from src.network.mqtt.homeAssistant.consts import CLASSNAME, CLASS_TEMPERATURE, 
 from src.network.mqtt.homeAssistant.dto.publishConfig import PublishConfig
 from src.network.mqtt.mqtt import Mqtt
 from src.shared.consts.consts import ENABLED
-from src.shared.message.message import info
+from src.shared.logs.logs import Logs
 from src.zone.consts import NAME, REMAINING_TIME, STATE, NEXT_CHANGE, MODE
 
 
@@ -20,7 +20,7 @@ class HomeAssistant(Mqtt):
         config = Config().get_config().get(consts.MQTT)
         self.enabled = config.get(ENABLED)
         if self.enabled:
-            info(CLASSNAME, 'Init...')
+            Logs.info(CLASSNAME, 'Init...')
             super().__init__(config.get(consts.HOST),
                              config.get(consts.PORT),
                              config.get(consts.USERNAME),
@@ -28,10 +28,10 @@ class HomeAssistant(Mqtt):
                              CLASSNAME)
 
     def on_connect(self, client, userdata, flags, rc):
-        info(CLASSNAME, "Connected !")
+        Logs.info(CLASSNAME, "Connected")
 
     def on_message(self, client, userdata, message):
-        info(CLASSNAME, message.topic)
+        Logs.info(CLASSNAME, message.topic)
 
     def publish_data(self, url: str, data: str):
         if self.enabled:
@@ -63,6 +63,6 @@ class HomeAssistant(Mqtt):
         self.publish_config(config)
 
     def init_subscribe_zone(self, name: str):
-        info(CLASSNAME, F'subscribe - buttons {name}')
+        Logs.info(CLASSNAME, F'subscribe - buttons {name}')
         self.client.subscribe(BUTTON + BUTTON_AUTO + F'_{name}'),
         self.client.subscribe(BUTTON + BUTTON_STATE + F'_{name}')

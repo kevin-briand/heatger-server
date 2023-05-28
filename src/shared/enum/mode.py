@@ -6,8 +6,8 @@ class Mode(Enum):
     MANUAL = 1
 
     @staticmethod
-    def to_mode(mode: int):
-        if mode == Mode.AUTO.value:
+    def to_mode(mode_num: int):
+        if mode_num == Mode.AUTO.value:
             return Mode.AUTO
         else:
             return Mode.MANUAL

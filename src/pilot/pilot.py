@@ -1,7 +1,7 @@
 from src.shared.enum.orders import Orders
 
 from src.external.gpio.gpio import Gpio
-from src.shared.message.message import info
+from src.shared.logs.logs import Logs
 
 CLASSNAME = 'Pilot'
 
@@ -15,7 +15,7 @@ class Pilot:
         self.reset_pins()
 
     def set_order(self, order: Orders):
-        info(CLASSNAME, 'set order : ' + order.name)
+        Logs.info(CLASSNAME, 'set order : ' + order.name)
         self.reset_pins()
         gpio_addr = self.gpio_eco_addr
         if order == Orders.COMFORT:

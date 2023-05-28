@@ -15,6 +15,8 @@ class Timer:
         self.timer_thread.start()
 
     def stop(self):
+        if self.timer_thread is None:
+            return
         self.timer_thread.cancel()
         self.time_start = None
         self.timeout = None

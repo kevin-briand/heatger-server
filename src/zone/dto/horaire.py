@@ -17,3 +17,11 @@ class Horaire:
             minute = int(horaire['hour'].split(':')[1])
             list_horaire.append(Horaire(int(horaire['day']), datetime.time(hour, minute), Orders.to_order(horaire['order'])))
         return list_horaire
+
+    def is_valid_horaire(self) -> bool:
+        return 0 <= self.day <= 6 and isinstance(self.hour, datetime.time) and isinstance(self.order, Orders)
+
+    def horaire_to_object(self):
+        return {'day': self.day,
+                'hour': self.hour.strftime('%H:%M'),
+                'order': self.order.value}

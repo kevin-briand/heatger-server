@@ -11,9 +11,6 @@ from src.shared.consts.consts import ENABLED
 
 class Network:
     def __init__(self):
-        config = Config().get_config().get(NETWORK)
-        self.ips_list = config.get(IP)
-        self.scan_activated = config.get(ENABLED)
         self.mqtt = HomeAssistant()
         if Config().get_config().get(MQTT).get(ENABLED):
             self.mqtt.start()
@@ -32,9 +29,11 @@ class Network:
 
     def scan_ips_list(self):
         ip_found = False
-        while not ip_found and self.scan_activated:
+        network_config = Config().get_config().get(NETWORK)
+        ip_list = network_config.get(IP)
+        while not ip_found and network_config.get(ENABLED):
             ips_found = self.scan(self.get_ip() + '/24')
-            for ip in self.ips_list:
+            for ip in ip_list:
                 if ips_found.index(ip) >= 0:
                     print(F'ip {ip} found !')
                     ip_found = True
@@ -52,3 +51,10 @@ class Network:
         finally:
             s.close()
         return local_ip
+
+    @staticmethod
+    def is_valid_ip(ip: str) -> bool:
+        ip_split = ip.split('.')
+        if len(ip_split) != 4 or not ip_split[0].isnumeric() or not ip_split[1].isnumeric() or not ip_split[2].isnumeric() or not ip_split[3].isnumeric():
+            return False
+        return True

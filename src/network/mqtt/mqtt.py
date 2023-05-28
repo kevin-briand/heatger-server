@@ -2,7 +2,7 @@ import abc
 from threading import Thread
 
 import paho.mqtt.client as mqtt
-from src.shared.message.message import info
+from src.shared.logs.logs import Logs
 
 
 class Mqtt(Thread, metaclass=abc.ABCMeta):
@@ -22,11 +22,11 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
 
     def publish_config(self, data):
         for publish_config in data:
-            info(self.classname, F'publish - {publish_config.get("name")}')
+            Logs.info(self.classname, F'publish - {publish_config.get("name")}')
             self.client.publish(publish_config["url"], publish_config.get('payload'))
 
     def connect(self):
-        info(self.classname, F'Connect to {self.host}:{str(self.port)}')
+        Logs.info(self.classname, F'Connect to {self.host}:{str(self.port)}')
         self.client.username_pw_set(self.username, password=self.password)
         self.client.connect(self.host, self.port)
 
