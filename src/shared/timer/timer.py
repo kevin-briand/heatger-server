@@ -16,6 +16,10 @@ class Timer:
 
     def stop(self):
         self.timer_thread.cancel()
+        self.time_start = None
+        self.timeout = None
 
     def get_remaining_time(self):
+        if self.timeout is None or self.time_start is None:
+            return -1
         return int(self.timeout - (datetime.now().timestamp() - self.time_start))

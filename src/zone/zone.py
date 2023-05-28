@@ -1,9 +1,9 @@
 from array import array
 
 from src.localStorage.config import Config
-from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR
 from src.pilot.pilot import Pilot
 from src.shared.consts.consts import ENABLED
+from src.shared.enum.mode import Mode
 from src.shared.enum.orders import Orders
 from src.shared.message.message import info
 from src.shared.timer.timer import Timer
@@ -22,6 +22,7 @@ class Zone:
         self.name = config[NAME]
         self.timer = Timer()
         self.current_order = Orders.COMFORT
+        self.current_mode = Mode.AUTO
         self.next_order = Orders.ECO
         self.clock_activated = config[ENABLED]
         self.list_horaires = Horaire.array_to_horaire(config[PROG])
@@ -39,9 +40,25 @@ class Zone:
     def on_time_out(self):
         info(CLASSNAME, F'timeOut zone {self.name} switch {self.current_order.name} to {self.next_order.name}')
         info(CLASSNAME, 'starting ping...')
-        self.network.scan()
+        self.network.scan_ips_list()
         self.set_order(self.next_order)
         self.start_next_order()
+
+    def toggle_order(self):
+        if self.current_order == Orders.COMFORT:
+            self.set_order(Orders.ECO)
+        else:
+            self.set_order(Orders.COMFORT)
+
+    def toggle_mode(self):
+        if self.current_mode == Mode.AUTO:
+            self.current_mode = Mode.MANUAL
+            self.clock_activated = False
+            self.timer.stop()
+        else:
+            self.current_mode = Mode.AUTO
+            self.clock_activated = True
+            self.start_next_order()
 
     def start_next_order(self):
         next_horaire: Horaire = None
@@ -64,22 +81,25 @@ class Zone:
                 return
 
         self.current_horaire = next_horaire
-        self.current_order = self.next_order
         self.next_order = next_horaire.order
         self.timer.start(remaining_time, self.on_time_out)
-        self.update_mqtt_data()
         info(CLASSNAME, F'next timeout in {str(remaining_time)}s')
 
     def set_order(self, order: Orders):
+        self.current_order = order
         self.pilot.set_order(order)
 
-    def update_mqtt_data(self):
-        self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR, InfoZone(self.id,
-                                                                     self.name,
-                                                                     self.current_order.name,
-                                                                     datetime.fromtimestamp(datetime.now().timestamp() +
-                                                                                            self.get_remaining_time()),
-                                                                     self.get_remaining_time()).to_json())
+    def get_data(self):
+        next_change = datetime.fromtimestamp(datetime.now().timestamp() + self.get_remaining_time())
+        if self.get_remaining_time() == -1:
+            next_change = 'Never'
+
+        return InfoZone(self.id,
+                        self.name,
+                        self.current_order.name,
+                        next_change,
+                        self.get_remaining_time(),
+                        self.current_mode.name).to_json()
 
     def set_current_order(self, order: Orders):
         self.current_order = order

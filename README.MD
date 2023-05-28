@@ -1,9 +1,6 @@
 Install dependencies
 
 ```shell
-venv/Scripts/activate
-```
-
-```shell
+Scripts/activate
 pip install -r requirements.txt
 ```

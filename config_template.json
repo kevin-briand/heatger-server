@@ -1,5 +1,6 @@
 {
   "MQTT": {
+    "enabled": false,
     "HOST":"",
     "PORT":0,
     "USERNAME":"",
