@@ -26,7 +26,7 @@ class PublishConfig:
             }
         }
 
-    def sensor(self) -> []:
+    def sensor(self) -> dict:
         return {
             'name': self.name,
             'url': F'{SENSOR}{self.name}/config',

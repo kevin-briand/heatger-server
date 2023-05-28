@@ -1,17 +1,20 @@
 import json
+from dataclasses import dataclass
 from datetime import datetime
 
+from src.shared.enum.mode import Mode
+from src.shared.enum.orders import Orders
 from src.zone.consts import NAME, STATE, REMAINING_TIME, NEXT_CHANGE, MODE
 
 
+@dataclass
 class InfoZone:
-    def __init__(self, id: str, name: str, state: str, next_change: datetime or str, remaining_time: int, mode: str):
-        self.id = id
-        self.name = name
-        self.state = state
-        self.next_change = next_change
-        self.remaining_time = remaining_time
-        self.mode = mode
+    id: str
+    name: str
+    state: Orders
+    next_change: datetime or str
+    remaining_time: int
+    mode: Mode
 
     def to_json(self):
         next_change: str
@@ -20,7 +23,7 @@ class InfoZone:
         else:
             next_change = self.next_change
         return json.dumps({F"{self.id}_{NAME}": self.name,
-                           F"{self.id}_{STATE}": self.state,
+                           F"{self.id}_{STATE}": self.state.name,
                            F"{self.id}_{NEXT_CHANGE}": next_change,
                            F"{self.id}_{REMAINING_TIME}": str(self.remaining_time),
-                           F"{self.id}_{MODE}": str(self.mode)})
+                           F"{self.id}_{MODE}": str(self.mode.name)})

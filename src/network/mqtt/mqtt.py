@@ -17,7 +17,7 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
         self.password = password
         self.classname = classname
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         return self.client.is_connected()
 
     def publish_config(self, data):

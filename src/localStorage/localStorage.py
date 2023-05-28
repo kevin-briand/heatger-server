@@ -10,7 +10,7 @@ class LocalStorage:
         except OSError:
             pass
 
-    def read(self):
+    def read(self) -> dict:
         file = open(self.filename, 'r')
         file.seek(0)
         if file.readable():

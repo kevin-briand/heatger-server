@@ -1,10 +1,13 @@
+import datetime
 import time
 from src.localStorage.config import Config
 from src.network.mqtt.consts import MQTT
 from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR
 from src.network.network import Network
 from src.shared.consts.consts import ENABLED
+from src.shared.enum.orders import Orders
 from src.zone.consts import ZONE
+from src.zone.dto.horaire import Horaire
 from src.zone.zone import Zone
 
 zones = []
@@ -36,6 +39,9 @@ if __name__ == '__main__':
     if mqtt_enabled:
         network.mqtt.init_publish_i2c()
         network.mqtt.set_on_message(on_mqtt_message)
+
+    horaire = Horaire(0, datetime.time(12,0), Orders.COMFORT)
+    Config().add_horaire('zone1', horaire)
 
     while True:
         for zone in zones:

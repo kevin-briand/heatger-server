@@ -12,7 +12,7 @@ class Config(LocalStorage):
         super().__init__('config.json')
         self.config = self.read()
 
-    def get_config(self):
+    def get_config(self) -> dict:
         return self.config
 
     def set_config(self, key: str, value: str):

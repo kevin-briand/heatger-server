@@ -16,7 +16,7 @@ class Network:
             self.mqtt.start()
 
     @staticmethod
-    def scan(ip):
+    def scan(ip) -> [str]:
         arp_req_frame = scapy.ARP(pdst=ip)
         broadcast_ether_frame = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
         broadcast_ether_arp_req_frame = broadcast_ether_frame / arp_req_frame
@@ -40,7 +40,7 @@ class Network:
                     break
 
     @staticmethod
-    def get_ip():
+    def get_ip() -> str:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.settimeout(0)
         try:

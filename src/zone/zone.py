@@ -104,23 +104,23 @@ class Zone:
         Persistence().set_order(self.id, order)
         self.pilot.set_order(order)
 
-    def get_data(self):
+    def get_data(self) -> InfoZone:
         next_change = datetime.fromtimestamp(datetime.now().timestamp() + self.get_remaining_time())
         if self.get_remaining_time() == -1:
             next_change = 'Never'
 
         return InfoZone(self.id,
                         self.name,
-                        self.current_order.name,
+                        self.current_order,
                         next_change,
                         self.get_remaining_time(),
-                        self.current_mode.name).to_json()
+                        self.current_mode).to_json()
 
     def set_current_order(self, order: Orders):
         self.current_order = order
         self.set_order(order)
 
-    def get_remaining_time(self):
+    def get_remaining_time(self) -> int:
         return self.timer.get_remaining_time()
 
     @staticmethod
