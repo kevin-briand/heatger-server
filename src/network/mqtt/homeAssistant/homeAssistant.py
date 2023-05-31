@@ -6,7 +6,8 @@ from src.I2C.temperature.consts import TEMPERATURE, CELCIUS, PERCENT, HUMIDITY, 
 from src.localStorage.config import Config
 from src.network.mqtt import consts
 from src.network.mqtt.homeAssistant.consts import CLASSNAME, CLASS_TEMPERATURE, \
-    CLASS_HUMIDITY, CLASS_PRESSURE, CLASS_GENERIC, CLASS_DURATION, SECOND, BUTTON, BUTTON_AUTO, BUTTON_STATE
+    CLASS_HUMIDITY, CLASS_PRESSURE, CLASS_GENERIC, CLASS_DURATION, SECOND, BUTTON, BUTTON_AUTO, BUTTON_STATE, \
+    BUTTON_FROSTFREE, FROSTFREE
 from src.network.mqtt.homeAssistant.dto.publishConfig import PublishConfig
 from src.network.mqtt.mqtt import Mqtt
 from src.shared.consts.consts import ENABLED
@@ -55,12 +56,22 @@ class HomeAssistant(Mqtt):
         self.publish_config(publish_config)
 
     def init_publish_zone(self, name: str):
+        Logs.info(CLASSNAME, F'publish - sensors {name}')
         config = [PublishConfig(F"{name}_{NAME}", CLASS_GENERIC).sensor(),
                   PublishConfig(F"{name}_{STATE}", CLASS_GENERIC).sensor(),
                   PublishConfig(F"{name}_{NEXT_CHANGE}", CLASS_GENERIC).sensor(),
                   PublishConfig(F"{name}_{REMAINING_TIME}", CLASS_DURATION, SECOND).sensor(),
                   PublishConfig(F"{name}_{MODE}", CLASS_GENERIC).sensor()]
         self.publish_config(config)
+
+    def init_publish_global(self):
+        Logs.info(CLASSNAME, F'publish - global sensors')
+        publish_config = [PublishConfig(FROSTFREE, CLASS_DURATION, SECOND).sensor()]
+        self.publish_config(publish_config)
+
+    def init_subscribe_global(self):
+        Logs.info(CLASSNAME, F'subscribe - global buttons')
+        self.client.subscribe(BUTTON + BUTTON_FROSTFREE)
 
     def init_subscribe_zone(self, name: str):
         Logs.info(CLASSNAME, F'subscribe - buttons {name}')

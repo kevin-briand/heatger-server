@@ -27,3 +27,6 @@ class Horaire:
         return {'day': self.day,
                 'hour': self.hour.strftime('%H:%M'),
                 'order': self.order.value}
+
+    def to_value(self) -> int:
+        return self.day * 100 + self.hour.hour * 10 + self.hour.minute

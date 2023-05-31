@@ -22,7 +22,6 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
 
     def publish_config(self, data):
         for publish_config in data:
-            Logs.info(self.classname, F'publish - {publish_config.get("name")}')
             self.client.publish(publish_config["url"], publish_config.get('payload'))
 
     def connect(self):

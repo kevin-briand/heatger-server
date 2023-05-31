@@ -7,10 +7,12 @@ from src.shared.logs.logs import Logs
 
 
 class Gpio:
+    def __init__(self):
+        if platform.system().lower() != WINDOWS:
+            self.client = pigpio.pi()
 
-    @staticmethod
-    def set_pin(addr: int, status: bool):
+    def set_pin(self, addr: int, status: bool):
         if platform.system().lower() == WINDOWS:
             Logs.info(CLASSNAME, F'set pin : {str(addr)} to {"on" if status else "off"}')
         else:
-            pigpio.pi().write(addr, status)
+            self.client.write(addr, status)
