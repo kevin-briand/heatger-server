@@ -1,5 +1,7 @@
 import datetime
 import time
+
+from src.electricMeter.electricMeter import ElectricMeter
 from src.localStorage.config import Config
 from src.network.mqtt.consts import MQTT
 from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR
@@ -77,12 +79,15 @@ if __name__ == '__main__':
         network.mqtt.init_publish_i2c()
         network.mqtt.set_on_message(on_mqtt_message)
 
+    em = ElectricMeter()
+
     frostfree.restore()
 
     while True:
         for zone in zones:
             network.mqtt.publish_data(PUBLISH_DATA_SENSOR, zone.get_data())
-            network.mqtt.publish_data(PUBLISH_DATA_SENSOR, frostfree.get_data())
+        network.mqtt.publish_data(PUBLISH_DATA_SENSOR, frostfree.get_data())
+        network.mqtt.publish_data(PUBLISH_DATA_SENSOR, em.get_data())
         time.sleep(5)
 
 

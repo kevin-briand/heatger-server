@@ -1,3 +1,4 @@
+from src.external.gpio.consts import OUTPUT
 from src.shared.enum.orders import Orders
 
 from src.external.gpio.gpio import Gpio
@@ -13,6 +14,8 @@ class Pilot:
         self.gpio_frostfree_addr = gpio_frostfree_addr
         self.on = reverse_on
         self.reset_pins()
+        self.gpio.init_pin(gpio_eco_addr, OUTPUT)
+        self.gpio.init_pin(gpio_frostfree_addr, OUTPUT)
 
     def set_order(self, order: Orders):
         Logs.info(CLASSNAME, 'set order : ' + order.name)

@@ -3,11 +3,12 @@ import time
 from src.I2C.consts import I2C
 from src.I2C.io.consts import IO
 from src.I2C.temperature.consts import TEMPERATURE, CELCIUS, PERCENT, HUMIDITY, PRESSURE, HECTOPASCAL
+from src.electricMeter.consts import ELECTRIC_METER
 from src.localStorage.config import Config
 from src.network.mqtt import consts
 from src.network.mqtt.homeAssistant.consts import CLASSNAME, CLASS_TEMPERATURE, \
     CLASS_HUMIDITY, CLASS_PRESSURE, CLASS_GENERIC, CLASS_DURATION, SECOND, BUTTON, BUTTON_AUTO, BUTTON_STATE, \
-    BUTTON_FROSTFREE, FROSTFREE
+    BUTTON_FROSTFREE, FROSTFREE, CLASS_ENERGY, KWH, TOTAL_INCREASING
 from src.network.mqtt.homeAssistant.dto.publishConfig import PublishConfig
 from src.network.mqtt.mqtt import Mqtt
 from src.shared.consts.consts import ENABLED
@@ -66,7 +67,8 @@ class HomeAssistant(Mqtt):
 
     def init_publish_global(self):
         Logs.info(CLASSNAME, F'publish - global sensors')
-        publish_config = [PublishConfig(FROSTFREE, CLASS_DURATION, SECOND).sensor()]
+        publish_config = [PublishConfig(FROSTFREE, CLASS_DURATION, SECOND).sensor(),
+                          PublishConfig(ELECTRIC_METER, CLASS_ENERGY, KWH, TOTAL_INCREASING).sensor()]
         self.publish_config(publish_config)
 
     def init_subscribe_global(self):

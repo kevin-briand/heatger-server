@@ -2,6 +2,8 @@ import abc
 from threading import Thread
 
 import paho.mqtt.client as mqtt
+
+from src.network.mqtt.homeAssistant.dto.publishConfig import PublishConfig
 from src.shared.logs.logs import Logs
 
 
@@ -20,9 +22,9 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
     def is_connected(self) -> bool:
         return self.client.is_connected()
 
-    def publish_config(self, data):
+    def publish_config(self, data: [PublishConfig]):
         for publish_config in data:
-            self.client.publish(publish_config["url"], publish_config.get('payload'))
+            self.client.publish(publish_config.get('url'), publish_config.get('payload'))
 
     def connect(self):
         Logs.info(self.classname, F'Connect to {self.host}:{str(self.port)}')

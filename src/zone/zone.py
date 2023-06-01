@@ -130,8 +130,8 @@ class Zone(Base):
         if list_horaires is None or len(list_horaires) == 0:
             Logs.error(self.id, "horaire list is empty")
             return [None, None]
-        current_horaire: Horaire = None
-        next_horaire: Horaire = None
+        current_horaire: Horaire or None = None
+        next_horaire: Horaire or None = None
         horaire_date: datetime
         now = datetime.now()
 

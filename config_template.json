@@ -23,11 +23,17 @@
       "enabled": false
     }
   },
+  "input": {
+    "electric_meter": {
+      "enabled": false,
+      "gpio_entry": 23
+    }
+  },
   "zone1": {
     "name": "",
     "enabled": true,
-    "gpio_eco": 16,
-    "gpio_frostfree": 17,
+    "gpio_eco": 17,
+    "gpio_frostfree": 18,
     "prog": [
       {
         "day": 0,
