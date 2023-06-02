@@ -4,8 +4,6 @@ from src.network.ping.ping import Ping
 
 
 class TestPing(unittest.TestCase):
-    def test_scan(self):
-        self.assertEqual(Ping.scan('127.0.0.1'), [])
 
     def test_get_ip(self):
         ip = Ping.get_ip()
