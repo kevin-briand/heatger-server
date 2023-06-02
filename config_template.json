@@ -23,7 +23,7 @@
       "enabled": false
     }
   },
-  "input": {
+  "entry": {
     "electric_meter": {
       "enabled": false,
       "gpio_entry": 23
