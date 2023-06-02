@@ -1,4 +1,3 @@
-import platform
 import socket
 import time
 from threading import Thread
@@ -26,10 +25,6 @@ class Ping(Thread):
 
         Logs.info(self.id, 'starting ping...')
         self.stop_ping = False
-        if platform.system() == 'Windows':
-            self.callback()
-            self.stop_ping = True
-            return
         network_config = Config().get_config().network
         ip_list = network_config.ip
         while network_config.enabled:
