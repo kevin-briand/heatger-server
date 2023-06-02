@@ -1,3 +1,4 @@
+"""Const for zone class"""
 CLASSNAME = 'Zone'
 ZONE = 'zone'
 NAME = 'name'

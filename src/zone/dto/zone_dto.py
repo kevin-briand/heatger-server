@@ -1,11 +1,18 @@
+"""object for config file"""
 import datetime
+from dataclasses import dataclass
 
 from src.shared.enum.orders import Orders
-from src.zone.dto.horaireDto import HoraireDto
+from src.zone.dto.horaire_dto import HoraireDto
 
 
-class ZoneDto(object):
-    def __init__(self, name: str, enabled: bool, gpio_eco: int, gpio_frostfree: int, prog: [], *args, **kwargs):
+@dataclass
+class ZoneDto:
+    """zone data object"""
+
+    # pylint: disable=unused-argument
+    def __init__(self, name: str, enabled: bool,
+                 gpio_eco: int, gpio_frostfree: int, prog: [], *args, **kwargs):
         self.name = name
         self.enabled = enabled
         self.gpio_eco = gpio_eco

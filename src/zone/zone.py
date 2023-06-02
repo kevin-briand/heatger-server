@@ -1,5 +1,7 @@
+"""Zone class"""
 import time
 
+from datetime import datetime
 from src.localStorage.config import Config
 from src.localStorage.persistence import Persistence
 from src.network.ping.ping import Ping
@@ -9,18 +11,18 @@ from src.shared.enum.orders import Orders
 from src.shared.logs.logs import Logs
 from src.zone.base import Base
 from src.zone.consts import ZONE
-from datetime import datetime
 
-from src.zone.dto.horaireDto import HoraireDto
-from src.zone.dto.infoZone import InfoZone
+from src.zone.dto.horaire_dto import HoraireDto
+from src.zone.dto.info_zone import InfoZone
 
 
 class Zone(Base):
+    """This class define a new heaters zone"""
     def __init__(self, number: int, network=None):
         super().__init__()
-        config = Config().get_config().__getattribute__(F"{ZONE}{number}")
-        self.id = F"{ZONE}{number}"
-        Logs.info(self.id, 'Init Zone ' + str(number))
+        config = getattr(Config().get_config(), F"{ZONE}{number}")
+        self.zone_id = F"{ZONE}{number}"
+        Logs.info(self.zone_id, 'Init Zone ' + str(number))
         self.name = config.name
         self.current_order = Orders.ECO
         self.current_mode = Mode.AUTO
@@ -29,17 +31,18 @@ class Zone(Base):
         self.current_horaire = None
         self.pilot = Pilot(config.gpio_eco, config.gpio_frostfree, True)
         self.network = network
-        self.ping = Ping(self.id, self.on_ip_found)
+        self.ping = Ping(self.zone_id, self.on_ip_found)
         self.restore_state()
 
     def restore_state(self):
-        persist = Persistence().get_value(self.id)
+        """Restore state/mode after a device reboot"""
+        persist = Persistence().get_value(self.zone_id)
         if not persist:
-            Persistence().set_order(self.id, self.current_order)
-            Persistence().set_mode(self.id, self.current_mode)
+            Persistence().set_order(self.zone_id, self.current_order)
+            Persistence().set_mode(self.zone_id, self.current_mode)
             return
-        self.current_order = Persistence().get_order(self.id)
-        mode = Persistence().get_mode(self.id)
+        self.current_order = Persistence().get_order(self.zone_id)
+        mode = Persistence().get_mode(self.zone_id)
         if self.current_mode != mode:
             self.toggle_mode()
         else:
@@ -54,10 +57,12 @@ class Zone(Base):
             self.set_order(Orders.ECO)
 
     def on_ip_found(self):
+        """Called when ip found on network(Ping class)"""
         self.set_order(Orders.COMFORT)
 
     def on_time_out(self):
-        Logs.info(self.id, F'timeout zone {self.name}')
+        """Called when timeout fired"""
+        Logs.info(self.zone_id, F'timeout zone {self.name}')
         if self.next_order == Orders.COMFORT:
             self.launch_ping()
         else:
@@ -66,26 +71,31 @@ class Zone(Base):
         self.start_next_order()
 
     def toggle_order(self):
+        """Switch state Comfort <> Eco"""
         if self.current_order == Orders.COMFORT:
             self.set_order(Orders.ECO)
         else:
             self.set_order(Orders.COMFORT)
 
     def launch_ping(self):
+        """Start discovery ip on network"""
         if self.ping.is_running():
             self.ping.stop()
             self.ping.join()
-        self.ping = Ping(self.id, self.on_ip_found)
+        self.ping = Ping(self.zone_id, self.on_ip_found)
         self.ping.start()
 
     def set_order(self, order: Orders):
-        Logs.info(self.id, F'zone {self.name} switch {self.current_order.name} to {order.name}')
+        """change state"""
+        Logs.info(self.zone_id,
+                  F'zone {self.name} switch {self.current_order.name} to {order.name}')
         self.current_order = order
         if order != Orders.FROSTFREE:
-            Persistence().set_order(self.id, order)
+            Persistence().set_order(self.zone_id, order)
         self.pilot.set_order(order)
 
     def toggle_mode(self):
+        """Switch mode Auto <> Manual"""
         if self.current_mode == Mode.AUTO:
             self.current_mode = Mode.MANUAL
             self.clock_activated = False
@@ -94,12 +104,13 @@ class Zone(Base):
         else:
             self.current_mode = Mode.AUTO
             self.clock_activated = True
-        Persistence().set_mode(self.id, self.current_mode)
-        Logs.info(self.id, "Mode set to " + self.current_mode.name)
+        Persistence().set_mode(self.zone_id, self.current_mode)
+        Logs.info(self.zone_id, "Mode set to " + self.current_mode.name)
         if self.clock_activated:
             self.restore_state()
 
     def set_frostfree(self, activate: bool):
+        """Activate/deactivate frost-free"""
         if activate:
             if self.current_mode == Mode.AUTO:
                 self.toggle_mode()
@@ -110,6 +121,7 @@ class Zone(Base):
                 self.toggle_mode()
 
     def start_next_order(self):
+        """Launch next timer (mode Auto)"""
         if not self.clock_activated or self.current_mode != Mode.AUTO:
             return
 
@@ -126,13 +138,14 @@ class Zone(Base):
         self.current_horaire = current_horaire
         self.next_order = next_horaire.order
         self.timer.start(remaining_time, self.on_time_out)
-        Logs.info(self.id, F'next timeout in {str(remaining_time)}s')
+        Logs.info(self.zone_id, F'next timeout in {str(remaining_time)}s')
 
     def get_current_and_next_horaire(self) -> [HoraireDto, HoraireDto]:
-        config = Config().get_config().__getattribute__(self.id)
+        """get the current and next horaire in prog list"""
+        config = getattr(Config().get_config(), self.zone_id)
         list_horaires = config.prog
         if list_horaires is None or len(list_horaires) == 0:
-            Logs.error(self.id, "horaire list is empty")
+            Logs.error(self.zone_id, "horaire list is empty")
             return [None, None]
         current_horaire: HoraireDto or None = None
         next_horaire: HoraireDto or None = None
@@ -156,11 +169,12 @@ class Zone(Base):
         return [current_horaire, next_horaire]
 
     def get_data(self) -> InfoZone:
+        """return information zone in json object"""
         next_change = datetime.fromtimestamp(datetime.now().timestamp() + self.get_remaining_time())
         if self.get_remaining_time() == -1:
             next_change = 'Never'
 
-        return InfoZone(self.id,
+        return InfoZone(self.zone_id,
                         self.name,
                         self.current_order,
                         next_change,

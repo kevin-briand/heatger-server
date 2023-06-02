@@ -1,3 +1,4 @@
+"""Const for homeassistant class"""
 DISCOVERY_PREFIX = 'homeassistant/'
 DEVICE_IDENTIFIER = 'heatger'
 DEVICE_MANUFACTURER = 'firedream'

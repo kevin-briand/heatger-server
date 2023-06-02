@@ -1,14 +1,16 @@
+"""Heatger main app"""
 import datetime
 import time
 
-from src.electricMeter.electricMeter import ElectricMeter
+from src.electricMeter.electric_meter import ElectricMeter
 from src.localStorage.config import Config
-from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, BUTTON_AUTO, BUTTON_FROSTFREE, BUTTON_STATE
+from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, \
+    BUTTON_AUTO, BUTTON_FROSTFREE, BUTTON_STATE
 from src.network.network import Network
 from src.shared.enum.orders import Orders
 from src.shared.logs.logs import Logs
 from src.zone.consts import ZONE
-from src.zone.dto.horaireDto import HoraireDto
+from src.zone.dto.horaire_dto import HoraireDto
 from src.zone.frostfree import Frostfree
 from src.zone.zone import Zone
 
@@ -17,16 +19,18 @@ frostfree: Frostfree = Frostfree(zones)
 CLASSNAME = 'Heatger'
 
 
+# pylint: disable=unused-argument
 def on_mqtt_message(client, userdata, message):
+    """processing of messages received by mqtt"""
     if message.retain:
         return
-    if message.topic.__contains__(ZONE):
+    if ZONE in message.topic:
         number_zone = int(message.topic[len(message.topic) - 1]) - 1
-        if message.topic.__contains__(F'{BUTTON_AUTO}_'):
-            zones.__getitem__(number_zone).toggle_mode()
-        elif message.topic.__contains__(F'{BUTTON_STATE}_'):
-            zones.__getitem__(number_zone).toggle_order()
-    elif message.topic.__contains__(BUTTON_FROSTFREE):
+        if F'{BUTTON_AUTO}_' in message.topic:
+            zones[number_zone].toggle_mode()
+        elif F'{BUTTON_STATE}_' in message.topic:
+            zones[number_zone].toggle_order()
+    elif BUTTON_FROSTFREE in message.topic:
         data = message.payload.decode('utf-8')
         if data == '':
             Logs.error(CLASSNAME, F'{Orders.FROSTFREE} - empty data')
@@ -35,7 +39,6 @@ def on_mqtt_message(client, userdata, message):
         if end_date is None:
             Logs.error(CLASSNAME, F'{Orders.FROSTFREE} - invalid date format')
             return
-        global frostfree
         if end_date > datetime.datetime.now():
             frostfree.start(end_date)
         else:
@@ -52,12 +55,24 @@ if __name__ == '__main__':
 
     # TEST -----------------------------------------
     horaires = [
-        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute), Orders.ECO),
-        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+1), Orders.COMFORT),
-        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+2), Orders.ECO),
-        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+3), Orders.COMFORT),
-        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+4), Orders.ECO),
-        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+5), Orders.COMFORT)
+        HoraireDto(datetime.datetime.now().weekday(),
+                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute),
+                   Orders.ECO),
+        HoraireDto(datetime.datetime.now().weekday(),
+                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 1),
+                   Orders.COMFORT),
+        HoraireDto(datetime.datetime.now().weekday(),
+                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 2),
+                   Orders.ECO),
+        HoraireDto(datetime.datetime.now().weekday(),
+                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 3),
+                   Orders.COMFORT),
+        HoraireDto(datetime.datetime.now().weekday(),
+                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 4),
+                   Orders.ECO),
+        HoraireDto(datetime.datetime.now().weekday(),
+                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 5),
+                   Orders.COMFORT)
     ]
     Config().remove_all_horaire("zone1")
     Config().add_horaires('zone1', horaires)
@@ -67,7 +82,7 @@ if __name__ == '__main__':
     # ---------------------------------------------
 
     try:
-        while config.__getattribute__(F"{ZONE}{i}") is not None:
+        while getattr(config, F"{ZONE}{i}") is not None:
             zones.append(Zone(i, network))
             if mqtt_enabled:
                 while not network.mqtt.is_connected():
@@ -94,7 +109,3 @@ if __name__ == '__main__':
         network.mqtt.publish_data(PUBLISH_DATA_SENSOR, frostfree.get_data())
         network.mqtt.publish_data(PUBLISH_DATA_SENSOR, em.get_data())
         time.sleep(5)
-
-
-
-

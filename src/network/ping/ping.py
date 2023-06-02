@@ -1,41 +1,42 @@
+"""Ping class"""
 import socket
 import time
 from threading import Thread
 
-import scapy.all as scapy
+from scapy.layers.l2 import Ether, ARP, srp
 
 from src.localStorage.config import Config
 from src.shared.logs.logs import Logs
 
-scanning_in_progress = False
-
 
 class Ping(Thread):
+    """class for found ip on network"""
+    scanning_in_progress = False
+
     def __init__(self, zone_id: str, callback):
         super().__init__()
         self.callback = callback
-        self.id = zone_id
+        self.zone_id = zone_id
         self.stop_ping = True
 
     def run(self) -> None:
-        global scanning_in_progress
-        while scanning_in_progress:
+        while Ping.scanning_in_progress:
             time.sleep(1)
-        scanning_in_progress = True
+        Ping.scanning_in_progress = True
 
-        Logs.info(self.id, 'starting ping...')
+        Logs.info(self.zone_id, 'starting ping...')
         self.stop_ping = False
         network_config = Config().get_config().network
         ip_list = network_config.ip
         while network_config.enabled:
             if self.stop_ping:
-                scanning_in_progress = False
+                Ping.scanning_in_progress = False
                 return
             ips_found = self.scan(self.get_ip() + '/24')
             for ip in ip_list:
                 try:
                     ips_found.index(ip)
-                    Logs.info(self.id, F'ip {ip} found !')
+                    Logs.info(self.zone_id, F'ip {ip} found !')
                     self.stop_ping = True
                     self.callback()
                     break
@@ -43,40 +44,46 @@ class Ping(Thread):
                     continue
 
     def stop(self):
+        """Stop scanning"""
         self.stop_ping = True
 
     def is_running(self) -> bool:
+        """return True if scan is in progress"""
         return not self.stop_ping
 
     @staticmethod
     def scan(ip) -> [str]:
-        arp_req_frame = scapy.ARP(pdst=ip)
-        broadcast_ether_frame = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+        """Return a list of ip found on the network"""
+        arp_req_frame = ARP(pdst=ip)
+        broadcast_ether_frame = Ether(dst="ff:ff:ff:ff:ff:ff")
         broadcast_ether_arp_req_frame = broadcast_ether_frame / arp_req_frame
 
-        answered_list = scapy.srp(broadcast_ether_arp_req_frame, timeout=2, verbose=False)[0]
+        answered_list = srp(broadcast_ether_arp_req_frame, timeout=2, verbose=False)[0]
         result = []
-        for i in range(0, len(answered_list)):
-            result.append(answered_list[i][1].psrc)
+        for item in enumerate(answered_list):
+            result.append(item[1][1].psrc)
         return result
 
     @staticmethod
     def get_ip() -> str:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(0)
+        """return ip of this device or 127.0.0.1"""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(0)
         try:
-            s.connect(('10.254.254.254', 1))
-            local_ip = s.getsockname()[0]
-        except Exception:
+            sock.connect(('10.254.254.254', 1))
+            local_ip = sock.getsockname()[0]
+        except socket.error:
             local_ip = '127.0.0.1'
         finally:
-            s.close()
+            sock.close()
         return local_ip
 
     @staticmethod
     def is_valid_ip(ip: str) -> bool:
+        """return True if ip is valid"""
         ip_split = ip.split('.')
-        if len(ip_split) != 4 or not ip_split[0].isnumeric() or not ip_split[1].isnumeric() or not ip_split[
-            2].isnumeric() or not ip_split[3].isnumeric():
+        if len(ip_split) != 4 or not ip_split[0].isnumeric()\
+                or not ip_split[1].isnumeric() or not ip_split[2].isnumeric()\
+                or not ip_split[3].isnumeric():
             return False
         return True

@@ -1,3 +1,4 @@
+"""ElectricMeter class"""
 import json
 import time
 from threading import Thread
@@ -11,10 +12,11 @@ from src.localStorage.config import Config
 
 
 class ElectricMeter(Thread):
+    """Class for reading and counting a GPIO input"""
     def __init__(self):
         super().__init__()
         self.gpio = Gpio()
-        conf_em = Config().get_config().input.electric_meter
+        conf_em = Config().get_config().entry.electric_meter
         self.gpio_input = int(conf_em.gpio_input)
         self.run_thread = True
         self.counter = 0
@@ -31,10 +33,13 @@ class ElectricMeter(Thread):
             time.sleep(0.03)
 
     def stop(self):
+        """Stopping reading loop"""
         self.run_thread = False
 
     def get_total(self):
+        """return the counter"""
         return self.counter
 
     def get_data(self) -> [str]:
+        """convert data to json"""
         return json.dumps({ELECTRIC_METER: self.counter})

@@ -1,3 +1,4 @@
+"""object for persistence file"""
 import json
 from dataclasses import dataclass
 from datetime import datetime
@@ -9,6 +10,7 @@ from src.zone.consts import NAME, STATE, REMAINING_TIME, NEXT_CHANGE, MODE
 
 @dataclass
 class InfoZone:
+    """infoZone data object"""
     id: str
     name: str
     state: Orders
@@ -17,6 +19,7 @@ class InfoZone:
     mode: Mode
 
     def to_json(self):
+        """Convert object to json"""
         next_change: str
         if isinstance(self.next_change, datetime):
             next_change = str(self.next_change.isoformat())

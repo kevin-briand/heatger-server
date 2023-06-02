@@ -1,3 +1,4 @@
+"""Const for Temperature class"""
 TEMPERATURE = 'temperature'
 HUMIDITY = 'humidity'
 PRESSURE = 'pressure'
