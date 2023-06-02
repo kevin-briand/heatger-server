@@ -1,5 +1,6 @@
 import json
 import os
+from src.localStorage.jsonEncoder.fileEncoder import FileEncoder
 
 
 class LocalStorage:
@@ -10,7 +11,7 @@ class LocalStorage:
         except OSError:
             pass
 
-    def read(self) -> dict:
+    def read(self):
         file = open(self.filename, 'r')
         file.seek(0)
         if file.readable():
@@ -24,5 +25,5 @@ class LocalStorage:
         os.remove(self.filename)
         file = open(self.filename, 'w')
         if file.writable():
-            file.write(json.dumps(data))
+            file.write(json.dumps(data, indent=4, cls=FileEncoder))
         file.close()

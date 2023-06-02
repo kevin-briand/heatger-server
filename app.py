@@ -3,14 +3,12 @@ import time
 
 from src.electricMeter.electricMeter import ElectricMeter
 from src.localStorage.config import Config
-from src.network.mqtt.consts import MQTT
-from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR
+from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, BUTTON_AUTO, BUTTON_FROSTFREE, BUTTON_STATE
 from src.network.network import Network
-from src.shared.consts.consts import ENABLED
 from src.shared.enum.orders import Orders
 from src.shared.logs.logs import Logs
 from src.zone.consts import ZONE
-from src.zone.dto.horaire import Horaire
+from src.zone.dto.horaireDto import HoraireDto
 from src.zone.frostfree import Frostfree
 from src.zone.zone import Zone
 
@@ -24,11 +22,11 @@ def on_mqtt_message(client, userdata, message):
         return
     if message.topic.__contains__(ZONE):
         number_zone = int(message.topic[len(message.topic) - 1]) - 1
-        if message.topic.__contains__('ma_'):
+        if message.topic.__contains__(F'{BUTTON_AUTO}_'):
             zones.__getitem__(number_zone).toggle_mode()
-        elif message.topic.__contains__('state_'):
+        elif message.topic.__contains__(F'{BUTTON_STATE}_'):
             zones.__getitem__(number_zone).toggle_order()
-    elif message.topic.__contains__('frostfree'):
+    elif message.topic.__contains__(BUTTON_FROSTFREE):
         data = message.payload.decode('utf-8')
         if data == '':
             Logs.error(CLASSNAME, F'{Orders.FROSTFREE} - empty data')
@@ -50,29 +48,36 @@ if __name__ == '__main__':
     zones.clear()
     i = 1
     config = Config().get_config()
-    mqtt_enabled = config.get(MQTT).get(ENABLED)
+    mqtt_enabled = config.mqtt.enabled
 
+    # TEST -----------------------------------------
     horaires = [
-        Horaire(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute), Orders.ECO),
-        Horaire(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+1), Orders.COMFORT),
-        Horaire(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+2), Orders.ECO),
-        Horaire(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+3), Orders.COMFORT),
-        Horaire(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+4), Orders.ECO),
-        Horaire(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+5), Orders.COMFORT)
+        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute), Orders.ECO),
+        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+1), Orders.COMFORT),
+        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+2), Orders.ECO),
+        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+3), Orders.COMFORT),
+        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+4), Orders.ECO),
+        HoraireDto(datetime.datetime.now().weekday(), datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute+5), Orders.COMFORT)
     ]
     Config().remove_all_horaire("zone1")
     Config().add_horaires('zone1', horaires)
     Config().remove_all_horaire("zone2")
     Config().add_horaires('zone2', horaires)
+    Config().add_ip('192.168.1.5')
+    # ---------------------------------------------
 
-    while config.get(F"{ZONE}{i}") is not None:
-        zones.append(Zone(i, network))
-        if mqtt_enabled:
-            while not network.mqtt.is_connected():
-                continue
-            network.mqtt.init_publish_zone(F"{ZONE}{i}")
-            network.mqtt.init_subscribe_zone(F"{ZONE}{i}")
-        i = i + 1
+    try:
+        while config.__getattribute__(F"{ZONE}{i}") is not None:
+            zones.append(Zone(i, network))
+            if mqtt_enabled:
+                while not network.mqtt.is_connected():
+                    continue
+                network.mqtt.init_publish_zone(F"{ZONE}{i}")
+                network.mqtt.init_subscribe_zone(F"{ZONE}{i}")
+            i = i + 1
+    except AttributeError:
+        pass
+
     if mqtt_enabled:
         network.mqtt.init_subscribe_global()
         network.mqtt.init_publish_global()

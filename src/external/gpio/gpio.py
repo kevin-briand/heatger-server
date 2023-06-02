@@ -23,6 +23,8 @@ class Gpio:
         return self.client.read(addr)
 
     def init_pin(self, addr: int, mode: int):
+        if platform.system().lower() == WINDOWS:
+            return
         self.client.set_mode(addr, mode)
         resistor = pigpio.PUD_DOWN
         if mode == pigpio.INPUT:

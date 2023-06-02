@@ -6,8 +6,6 @@ from threading import Thread
 import scapy.all as scapy
 
 from src.localStorage.config import Config
-from src.network.consts import NETWORK, IP
-from src.shared.consts.consts import ENABLED
 from src.shared.logs.logs import Logs
 
 scanning_in_progress = False
@@ -32,9 +30,9 @@ class Ping(Thread):
             self.callback()
             self.stop_ping = True
             return
-        network_config = Config().get_config().get(NETWORK)
-        ip_list = network_config.get(IP)
-        while network_config.get(ENABLED):
+        network_config = Config().get_config().network
+        ip_list = network_config.ip
+        while network_config.enabled:
             if self.stop_ping:
                 scanning_in_progress = False
                 return
