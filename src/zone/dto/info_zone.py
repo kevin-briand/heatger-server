@@ -3,9 +3,10 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 
+from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.shared.enum.mode import Mode
 from src.shared.enum.orders import Orders
-from src.zone.consts import NAME, STATE, REMAINING_TIME, NEXT_CHANGE, MODE
+from src.zone.consts import NAME, STATE, NEXT_CHANGE, MODE, IS_PING
 
 
 @dataclass
@@ -14,19 +15,22 @@ class InfoZone:
     id: str
     name: str
     state: Orders
-    next_change: datetime or str
-    remaining_time: int
+    next_change: datetime
+    is_ping: bool
     mode: Mode
 
     def to_json(self):
         """Convert object to json"""
-        next_change: str
-        if isinstance(self.next_change, datetime):
-            next_change = str(self.next_change.isoformat())
-        else:
-            next_change = self.next_change
-        return json.dumps({F"{self.id}_{NAME}": self.name,
-                           F"{self.id}_{STATE}": self.state.name,
-                           F"{self.id}_{NEXT_CHANGE}": next_change,
-                           F"{self.id}_{REMAINING_TIME}": str(self.remaining_time),
-                           F"{self.id}_{MODE}": str(self.mode.name)})
+        return json.dumps(self.to_object(), cls=FileEncoder)
+
+    def to_object(self):
+        """return an object"""
+        next_change = None
+        if self.next_change is not None:
+            next_change = self.next_change.replace(minute=self.next_change.minute+1,
+                                                   second=0, microsecond=0)
+        return {F"{self.id}_{NAME}": self.name,
+                F"{self.id}_{STATE}": self.state.name,
+                F"{self.id}_{NEXT_CHANGE}": next_change,
+                F"{self.id}_{MODE}": str(self.mode.name),
+                F"{self.id}_{IS_PING}": self.is_ping}

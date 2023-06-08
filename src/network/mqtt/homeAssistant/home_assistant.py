@@ -6,12 +6,14 @@ from src.I2C.temperature.consts import TEMPERATURE, CELCIUS, PERCENT, HUMIDITY,\
 from src.electricMeter.consts import ELECTRIC_METER
 from src.localStorage.config import Config
 from src.network.mqtt.homeAssistant.consts import CLASSNAME, CLASS_TEMPERATURE, \
-    CLASS_HUMIDITY, CLASS_PRESSURE, CLASS_GENERIC, CLASS_DURATION, SECOND, BUTTON,\
-    BUTTON_AUTO, BUTTON_STATE, BUTTON_FROSTFREE, FROSTFREE, CLASS_ENERGY, WH, TOTAL_INCREASING
-from src.network.mqtt.homeAssistant.dto.publish_config_dto import PublishConfigDto
+    CLASS_HUMIDITY, CLASS_PRESSURE, CLASS_GENERIC, CLASS_DURATION, SECOND, BUTTON, \
+    BUTTON_FROSTFREE, FROSTFREE, CLASS_ENERGY, WH, TOTAL_INCREASING, SWITCH_MODE, \
+    SWITCH_STATE
+from src.network.mqtt.homeAssistant.dto.button_config_dto import ButtonConfigDto
+from src.network.mqtt.homeAssistant.dto.sensor_config_dto import SensorConfigDto
 from src.network.mqtt.mqtt import Mqtt
 from src.shared.logs.logs import Logs
-from src.zone.consts import NAME, REMAINING_TIME, STATE, NEXT_CHANGE, MODE
+from src.zone.consts import NAME, STATE, NEXT_CHANGE, MODE, IS_PING
 
 
 class HomeAssistant(Mqtt):
@@ -55,22 +57,25 @@ class HomeAssistant(Mqtt):
         publish_conf = []
         conf_i2c = Config().get_config().i2c
         if conf_i2c.temperature.enabled:
-            publish_conf.append(PublishConfigDto(TEMPERATURE, CLASS_TEMPERATURE, CELCIUS).sensor())
-            publish_conf.append(PublishConfigDto(HUMIDITY, CLASS_HUMIDITY, PERCENT).sensor())
-            publish_conf.append(PublishConfigDto(PRESSURE, CLASS_PRESSURE, HECTOPASCAL).sensor())
+            publish_conf.append(SensorConfigDto(TEMPERATURE,
+                                                CLASS_TEMPERATURE, CELCIUS).to_object())
+            publish_conf.append(SensorConfigDto(HUMIDITY, CLASS_HUMIDITY, PERCENT).to_object())
+            publish_conf.append(SensorConfigDto(PRESSURE, CLASS_PRESSURE, HECTOPASCAL).to_object())
         if conf_i2c.io.enabled:
-            publish_conf.append([PRESSURE, PublishConfigDto(TEMPERATURE, CELCIUS)])
+            publish_conf.append([PRESSURE, SensorConfigDto(TEMPERATURE, CELCIUS)])
         self.publish_config(publish_conf)
 
     def init_publish_zone(self, name: str):
-        """initialise zone sensors"""
+        """initialise zone sensors/buttons"""
         Logs.info(CLASSNAME, F'publish - sensors {name}')
         config = [
-            PublishConfigDto(F"{name}_{NAME}", CLASS_GENERIC).sensor(),
-            PublishConfigDto(F"{name}_{STATE}", CLASS_GENERIC).sensor(),
-            PublishConfigDto(F"{name}_{NEXT_CHANGE}", CLASS_GENERIC).sensor(),
-            PublishConfigDto(F"{name}_{REMAINING_TIME}", CLASS_DURATION, SECOND).sensor(),
-            PublishConfigDto(F"{name}_{MODE}", CLASS_GENERIC).sensor()
+            SensorConfigDto(F"{name}_{NAME}", CLASS_GENERIC).to_object(),
+            SensorConfigDto(F"{name}_{STATE}", CLASS_GENERIC).to_object(),
+            SensorConfigDto(F"{name}_{NEXT_CHANGE}", CLASS_GENERIC).to_object(),
+            SensorConfigDto(F"{name}_{IS_PING}", CLASS_GENERIC).to_object(),
+            SensorConfigDto(F"{name}_{MODE}", CLASS_GENERIC).to_object(),
+            ButtonConfigDto(F"{name}_{SWITCH_MODE}").to_object(),
+            ButtonConfigDto(F"{name}_{SWITCH_STATE}").to_object()
         ]
         self.publish_config(config)
 
@@ -78,18 +83,19 @@ class HomeAssistant(Mqtt):
         """initialise global sensors"""
         Logs.info(CLASSNAME, 'publish - global sensors')
         publish_config = [
-            PublishConfigDto(FROSTFREE, CLASS_DURATION, SECOND).sensor(),
-            PublishConfigDto(ELECTRIC_METER, CLASS_ENERGY, WH, TOTAL_INCREASING).sensor()
+            SensorConfigDto(FROSTFREE, CLASS_DURATION, SECOND).to_object(),
+            SensorConfigDto(ELECTRIC_METER, CLASS_ENERGY, WH, TOTAL_INCREASING).to_object(),
+            ButtonConfigDto(FROSTFREE).to_object()
         ]
         self.publish_config(publish_config)
 
     def init_subscribe_global(self):
         """initialise global buttons"""
         Logs.info(CLASSNAME, 'subscribe - global buttons')
-        self.client.subscribe(BUTTON + BUTTON_FROSTFREE)
+        self.client.subscribe(BUTTON + BUTTON_FROSTFREE + '/commands')
 
     def init_subscribe_zone(self, name: str):
         """initialise zone buttons"""
         Logs.info(CLASSNAME, F'subscribe - buttons {name}')
-        self.client.subscribe(BUTTON + BUTTON_AUTO + F'_{name}')
-        self.client.subscribe(BUTTON + BUTTON_STATE + F'_{name}')
+        self.client.subscribe(BUTTON + F'{name}_' + SWITCH_MODE + '/commands')
+        self.client.subscribe(BUTTON + F'{name}_' + SWITCH_STATE + '/commands')

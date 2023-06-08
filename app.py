@@ -1,11 +1,13 @@
 """Heatger main app"""
 import datetime
+import json
 import time
 
 from src.electricMeter.electric_meter import ElectricMeter
 from src.localStorage.config import Config
+from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, \
-    BUTTON_AUTO, BUTTON_FROSTFREE, BUTTON_STATE
+    BUTTON_FROSTFREE, SWITCH_MODE, SWITCH_STATE
 from src.network.network import Network
 from src.shared.enum.orders import Orders
 from src.shared.logs.logs import Logs
@@ -25,17 +27,19 @@ def on_mqtt_message(client, userdata, message):
     if message.retain:
         return
     if ZONE in message.topic:
-        number_zone = int(message.topic[len(message.topic) - 1]) - 1
-        if F'{BUTTON_AUTO}_' in message.topic:
+        number_zone = Zone.get_zone_number(message.topic)
+        if number_zone == -1:
+            return
+        if F'_{SWITCH_MODE}' in message.topic:
             zones[number_zone].toggle_mode()
-        elif F'{BUTTON_STATE}_' in message.topic:
+        elif F'_{SWITCH_STATE}' in message.topic:
             zones[number_zone].toggle_order()
     elif BUTTON_FROSTFREE in message.topic:
-        data = message.payload.decode('utf-8')
-        if data == '':
+        payload = message.payload.decode('utf-8')
+        if payload == '':
             Logs.error(CLASSNAME, F'{Orders.FROSTFREE} - empty data')
             return
-        end_date = datetime.datetime.strptime(data, '%Y-%m-%dT%H:%M')
+        end_date = datetime.datetime.strptime(payload, '%Y-%m-%dT%H:%M')
         if end_date is None:
             Logs.error(CLASSNAME, F'{Orders.FROSTFREE} - invalid date format')
             return
@@ -76,9 +80,6 @@ if __name__ == '__main__':
     ]
     Config().remove_all_horaire("zone1")
     Config().add_horaires('zone1', horaires)
-    Config().remove_all_horaire("zone2")
-    Config().add_horaires('zone2', horaires)
-    Config().add_ip('192.168.1.5')
     # ---------------------------------------------
 
     try:
@@ -103,9 +104,14 @@ if __name__ == '__main__':
 
     frostfree.restore()
 
+    old_data = {}
     while True:
+        data = {}
         for zone in zones:
-            network.mqtt.publish_data(PUBLISH_DATA_SENSOR, zone.get_data())
-        network.mqtt.publish_data(PUBLISH_DATA_SENSOR, frostfree.get_data())
-        network.mqtt.publish_data(PUBLISH_DATA_SENSOR, em.get_data())
-        time.sleep(5)
+            data.update(zone.get_data().to_object())
+        data.update(frostfree.get_data().to_object())
+        if data != old_data:
+            network.mqtt.publish_data(PUBLISH_DATA_SENSOR, json.dumps(data, cls=FileEncoder))
+            old_data = data
+        # network.mqtt.publish_data(PUBLISH_DATA_SENSOR, em.get_data())
+        time.sleep(0.5)

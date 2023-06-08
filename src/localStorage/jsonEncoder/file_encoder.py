@@ -12,4 +12,6 @@ class FileEncoder(JSONEncoder):
             return o.value
         if isinstance(o, datetime.time):
             return o.isoformat()
+        if isinstance(o, datetime.datetime):
+            return o.isoformat()
         return o.__dict__

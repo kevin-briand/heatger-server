@@ -4,7 +4,7 @@ from threading import Thread
 
 import paho.mqtt.client as mqtt
 
-from src.network.mqtt.homeAssistant.dto.publish_config_dto import PublishConfigDto
+from src.network.mqtt.homeAssistant.dto.sensor_config_dto import SensorConfigDto
 from src.shared.logs.logs import Logs
 
 
@@ -25,7 +25,7 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
         """return true if mqtt is connected"""
         return self.client.is_connected()
 
-    def publish_config(self, data: [PublishConfigDto]):
+    def publish_config(self, data: [SensorConfigDto]):
         """publish data list"""
         for publish_config in data:
             self.client.publish(publish_config.get('url'), publish_config.get('payload'))

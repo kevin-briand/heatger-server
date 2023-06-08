@@ -2,11 +2,12 @@
 import json
 from dataclasses import dataclass
 
+from src.network.mqtt.generic_config_dto import GenericConfigDto
 from src.network.mqtt.homeAssistant.consts import SENSOR, DEVICE_MANUFACTURER, DEVICE_NAME
 
 
 @dataclass
-class PublishConfigDto:
+class SensorConfigDto(GenericConfigDto):
     """mqtt data object for create a sensor in home assistant"""
     def __init__(self, name: str, device_class: str, unit_of_measurement='', state_class=None):
         self.name = name
@@ -14,39 +15,34 @@ class PublishConfigDto:
         self.unit_of_measurement = unit_of_measurement
         self.state_class = state_class
 
-    @staticmethod
-    def sensor_payload(name: str, device_class: str, unit_of_measurement='', state_class=None):
+    def payload(self):
         """Return an object necessary to define a new sensor in home assistant"""
         response = {
-            "name": name,
-            "unique_id": name,
-            "value_template": "{{ value_json." + name + "}}",
-            "device_class": device_class,
+            "name": self.name,
+            "unique_id": self.name,
+            "value_template": "{{ value_json." + self.name + "}}",
+            "device_class": self.device_class,
             "state_topic": SENSOR + "heatger/state",
-            'unit_of_measurement': unit_of_measurement,
+            'unit_of_measurement': self.unit_of_measurement,
             "device": {
                 "identifiers": ["heatger"],
                 "manufacturer": DEVICE_MANUFACTURER,
                 "name": DEVICE_NAME
             }
         }
-        if state_class is not None:
-            response['state_class'] = state_class
+        if self.state_class is not None:
+            response['state_class'] = self.state_class
 
         return response
 
-    def sensor(self) -> dict:
+    def to_object(self) -> dict:
         """return an object containing :\n
          - name: sensor name
          - url: url to publish config
-         - payload: payload returned by sensor_payload function
+         - payload: payload returned by payload function
          """
         return {
             'name': self.name,
             'url': F'{SENSOR}{self.name}/config',
-            'payload': json.dumps(
-                PublishConfigDto.sensor_payload(self.name,
-                                                self.device_class,
-                                                self.unit_of_measurement,
-                                                self.state_class))
+            'payload': json.dumps(self.payload())
         }

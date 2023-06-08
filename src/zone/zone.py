@@ -1,4 +1,5 @@
 """Zone class"""
+import re
 import time
 
 from datetime import datetime
@@ -32,6 +33,7 @@ class Zone(Base):
         self.pilot = Pilot(config.gpio_eco, config.gpio_frostfree, True)
         self.network = network
         self.ping = Ping(self.zone_id, self.on_ip_found)
+        self.is_ping = False
         self.restore_state()
 
     def restore_state(self):
@@ -58,6 +60,7 @@ class Zone(Base):
 
     def on_ip_found(self):
         """Called when ip found on network(Ping class)"""
+        self.is_ping = False
         self.set_order(Orders.COMFORT)
 
     def on_time_out(self):
@@ -67,6 +70,8 @@ class Zone(Base):
             self.launch_ping()
         else:
             self.set_order(self.next_order)
+            self.ping.stop()
+            self.is_ping = False
         time.sleep(1)
         self.start_next_order()
 
@@ -79,6 +84,7 @@ class Zone(Base):
 
     def launch_ping(self):
         """Start discovery ip on network"""
+        self.is_ping = True
         if self.ping.is_running():
             self.ping.stop()
             self.ping.join()
@@ -101,6 +107,7 @@ class Zone(Base):
             self.clock_activated = False
             self.current_horaire = None
             self.timer.stop()
+            self.is_ping = False
         else:
             self.current_mode = Mode.AUTO
             self.clock_activated = True
@@ -115,6 +122,8 @@ class Zone(Base):
             if self.current_mode == Mode.AUTO:
                 self.toggle_mode()
             self.current_horaire = None
+            self.ping.stop()
+            self.is_ping = False
             self.set_order(Orders.FROSTFREE)
         else:
             if self.current_mode == Mode.MANUAL:
@@ -172,11 +181,19 @@ class Zone(Base):
         """return information zone in json object"""
         next_change = datetime.fromtimestamp(datetime.now().timestamp() + self.get_remaining_time())
         if self.get_remaining_time() == -1:
-            next_change = 'Never'
+            next_change = None
 
         return InfoZone(self.zone_id,
                         self.name,
                         self.current_order,
                         next_change,
-                        self.get_remaining_time(),
-                        self.current_mode).to_json()
+                        self.is_ping,
+                        self.current_mode)
+
+    @staticmethod
+    def get_zone_number(topic: str) -> int:
+        """Return the zone number, else -1"""
+        zone_number = re.search(r"\d", topic)
+        if zone_number is None:
+            return -1
+        return int(zone_number.group(0))-1
