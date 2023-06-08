@@ -1,11 +1,13 @@
 """Logs class"""
+import os
 from datetime import datetime
 
 
 class Logs:
     """Write messages in logs file"""
     def __init__(self):
-        self.message_file = open('logs.txt', 'a', encoding='utf-8')
+        path = os.path.dirname(__file__).split('src')[0]
+        self.message_file = open(path + 'logs.txt', 'a', encoding='utf-8')
         if not self.message_file.writable():
             print('logs file not writable')
 
