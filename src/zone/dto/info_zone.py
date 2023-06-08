@@ -27,8 +27,9 @@ class InfoZone:
         """return an object"""
         next_change = None
         if self.next_change is not None:
-            next_change = self.next_change.replace(minute=self.next_change.minute+1,
-                                                   second=0, microsecond=0)
+            next_change = self.next_change.replace(
+                minute=self.next_change.minute+1 if self.next_change.minute < 59 else 59,
+                second=0, microsecond=0)
         return {F"{self.id}_{NAME}": self.name,
                 F"{self.id}_{STATE}": self.state.name,
                 F"{self.id}_{NEXT_CHANGE}": next_change,
