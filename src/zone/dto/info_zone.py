@@ -33,5 +33,5 @@ class InfoZone:
         return {F"{self.id}_{NAME}": self.name,
                 F"{self.id}_{STATE}": self.state.name,
                 F"{self.id}_{NEXT_CHANGE}": next_change,
-                F"{self.id}_{MODE}": str(self.mode.name),
+                F"{self.id}_{MODE}": self.mode.name,
                 F"{self.id}_{IS_PING}": self.is_ping}

@@ -21,15 +21,17 @@ class SensorConfigDto(GenericConfigDto):
             "name": self.name,
             "unique_id": self.name,
             "value_template": "{{ value_json." + self.name + "}}",
-            "device_class": self.device_class,
             "state_topic": SENSOR + "heatger/state",
-            'unit_of_measurement': self.unit_of_measurement,
             "device": {
                 "identifiers": ["heatger"],
                 "manufacturer": DEVICE_MANUFACTURER,
                 "name": DEVICE_NAME
             }
         }
+        if self.device_class is not None:
+            response['device_class'] = self.device_class
+        if self.unit_of_measurement != '':
+            response['unit_of_measurement'] = self.unit_of_measurement
         if self.state_class is not None:
             response['state_class'] = self.state_class
 
