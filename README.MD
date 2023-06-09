@@ -13,14 +13,14 @@ features include :
 ### table of contents
 - **[Install](#install)**
 - **[setting up config.json](#setting-up-configjson)**
-- - **[Mqtt](#mqtt)**
-- - **[Network](#network)**
-- - **[I2C](#i2c)**
-- - **[Input](#input)**
-- - **[Zone](#zone)**
+  - **[Mqtt](#mqtt)**
+  - **[Network](#network)**
+  - **[I2C](#i2c)**
+  - **[Input](#input)**
+  - **[Zone](#zone)**
 - **[custom card for home assistant](#heatger-card)**
-- - **[Install](#install-1)**
-- - **[use](#use)**
+  - **[Install](#install-1)**
+  - **[use](#use)**
 - **[custom panel for home assistant(soon)](#heatger-panel)**
 
 # Install
