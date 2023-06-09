@@ -17,7 +17,7 @@ class HeatgerCard extends LitElement {
         this.timer = null
         this.timeInterval = 1000
         this.startTimer()
-        this.zones
+        this.zones = []
     }
 
     handleFrostFree(ev) {
@@ -45,7 +45,7 @@ class HeatgerCard extends LitElement {
             this.setTimeInterval(3600000)
             return `${date.getUTCDate()-1}j ${date.getUTCHours()}h`;
         }
-        if (date.getUTCHours() > 0 && date.getUTCDate() === 0) {
+        if (date.getUTCHours() > 0 && date.getUTCDate() === 1) {
             this.setTimeInterval(60000)
             return `${date.getUTCHours()}h ${date.getUTCMinutes()}m`;
         }
@@ -108,6 +108,7 @@ class HeatgerCard extends LitElement {
     }
 
     blinkButton = () => {
+        if(this.zones === undefined) return;
         this.zones.forEach((zone) => {
             if(zone.isPing === 'True') {
                 const button = this.shadowRoot.querySelector(`#${zone.id}_State`)
@@ -151,16 +152,13 @@ class HeatgerCard extends LitElement {
             })
             i++
         }
-
-        const global = {
-            temperature: this.hass.states['sensor.temperature'].state,
-            consumption: this.hass.states['sensor.electric_meter'].state,
-            frostfreeEndDate: this.hass.states['sensor.frostfree'].state
-        }
         this.zones = zones
 
+        const global = {
+            frostfreeEndDate: this.hass.states['sensor.frostfree'].state
+        }
+
         if(global.frostfreeEndDate !== 'unknown') {
-            console.log(global.frostfreeEndDate)
             return html`
                 <ha-card header="Heatger" >
                     <div class="card-content">
