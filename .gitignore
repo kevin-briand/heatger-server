@@ -163,3 +163,4 @@ config.json
 logs.txt
 persist.json
 /Scripts/
+pyvenv.cfg
