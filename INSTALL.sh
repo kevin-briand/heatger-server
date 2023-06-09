@@ -10,10 +10,8 @@ echo -e "${GREEN}run pigpiod on startup${NC}"
 sudo systemctl enable pigpiod
 echo -e "${GREEN}install python${NC}"
 sudo apt-get install python3 python3-pip python3-venv -y
-echo -e "${GREEN}setting up environment${NC}"
-python3 -m venv .venv
 echo -e "${GREEN}install dependencies${NC}"
-pip install -r requirements.txt
+sudo python -m pip install -r requirements.txt
 if [ ! -f config.json ]
 then
   echo -e "${GREEN}copy config.json${NC}"
