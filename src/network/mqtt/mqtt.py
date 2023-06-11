@@ -1,5 +1,6 @@
 """Mqtt abstract class"""
 import abc
+import socket
 from threading import Thread
 
 import paho.mqtt.client as mqtt
@@ -34,7 +35,12 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
         """connect to the host"""
         Logs.info(self.classname, F'Connect to {self.host}:{str(self.port)}')
         self.client.username_pw_set(self.username, password=self.password)
-        self.client.connect(self.host, self.port)
+        for i in range(3):
+            try:
+                self.client.connect(self.host, self.port)
+                break
+            except socket.timeout:
+                Logs.error(self.classname, F'Fail to connect - attempt {i+1}/3')
 
     def run(self) -> None:
         self.connect()
