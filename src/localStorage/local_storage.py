@@ -10,7 +10,7 @@ class LocalStorage:
         self.filename = filename
         self.path = os.path.dirname(__file__).split('src')[0]
         try:
-            with open( self.path + filename, 'x', encoding='utf-8'):
+            with open(self.path + filename, 'x', encoding='utf-8'):
                 pass
         except OSError:
             pass

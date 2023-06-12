@@ -14,7 +14,11 @@ class Config(LocalStorage):
 
     def get_config(self):
         """return a ConfigDto object"""
-        return ConfigDto(**self.read())
+        try:
+            return ConfigDto(**self.read())
+        except TypeError as exc:
+            Logs.error(CLASSNAME, 'missing arguments in the file')
+            raise TypeError from exc
 
     def set_config(self, key: str, value: str):
         """set value of a key"""

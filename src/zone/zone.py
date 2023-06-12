@@ -35,6 +35,7 @@ class Zone(Base):
         self.ping = Ping(self.zone_id, self.on_ip_found)
         self.is_ping = False
         self.restore_state()
+        Logs.info(self.zone_id, 'Started !')
 
     def restore_state(self):
         """Restore state/mode after a device reboot"""

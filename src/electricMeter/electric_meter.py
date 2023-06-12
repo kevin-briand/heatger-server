@@ -5,10 +5,11 @@ from threading import Thread
 
 import pigpio
 
-from src.electricMeter.consts import ELECTRIC_METER
+from src.electricMeter.consts import ELECTRIC_METER, CLASSNAME
 from src.external.gpio.consts import INPUT
 from src.external.gpio.gpio import Gpio
 from src.localStorage.config import Config
+from src.shared.logs.logs import Logs
 
 
 class ElectricMeter(Thread):
@@ -23,6 +24,7 @@ class ElectricMeter(Thread):
         self.gpio.init_pin(self.gpio_input, INPUT)
         if conf_em.enabled:
             self.start()
+            Logs.info(CLASSNAME, "Started !")
 
     def run(self) -> None:
         while self.run_thread:

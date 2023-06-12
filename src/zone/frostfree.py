@@ -19,6 +19,7 @@ class Frostfree(Base):
         Logs.info(CLASSNAME, 'Init...')
         self.zones = zones
         self.end_date = None
+        Logs.info(CLASSNAME, 'Started !')
 
     def on_time_out(self):
         """called when the timer ended"""

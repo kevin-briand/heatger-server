@@ -6,7 +6,7 @@ from src.I2C.temperature.consts import TEMPERATURE, CELCIUS, PERCENT, HUMIDITY,\
 from src.electricMeter.consts import ELECTRIC_METER
 from src.localStorage.config import Config
 from src.network.mqtt.homeAssistant.consts import CLASSNAME, CLASS_TEMPERATURE, \
-    CLASS_HUMIDITY, CLASS_PRESSURE, CLASS_GENERIC, CLASS_DURATION, SECOND, BUTTON, \
+    CLASS_HUMIDITY, CLASS_PRESSURE, CLASS_GENERIC, BUTTON, \
     BUTTON_FROSTFREE, FROSTFREE, CLASS_ENERGY, WH, TOTAL_INCREASING, SWITCH_MODE, \
     SWITCH_STATE
 from src.network.mqtt.homeAssistant.dto.button_config_dto import ButtonConfigDto
@@ -83,7 +83,7 @@ class HomeAssistant(Mqtt):
         """initialise global sensors"""
         Logs.info(CLASSNAME, 'publish - global sensors')
         publish_config = [
-            SensorConfigDto(FROSTFREE, CLASS_DURATION, SECOND).to_object(),
+            SensorConfigDto(FROSTFREE, CLASS_GENERIC).to_object(),
             SensorConfigDto(ELECTRIC_METER, CLASS_ENERGY, WH, TOTAL_INCREASING).to_object(),
             ButtonConfigDto(FROSTFREE).to_object()
         ]
