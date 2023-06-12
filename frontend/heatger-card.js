@@ -35,7 +35,7 @@ class HeatgerCard extends LitElement {
     }
 
     toHour = (nextChange) => {
-        if(nextChange === 'unknown')
+        if(nextChange === 'None')
             return 'Never'
         let date = new Date(new Date(nextChange).valueOf() - Date.now())
         if (date.getUTCDate() > 10) {
@@ -158,7 +158,7 @@ class HeatgerCard extends LitElement {
             frostfreeEndDate: this.hass.states['sensor.frostfree'].state
         }
 
-        if(global.frostfreeEndDate !== 'unknown') {
+        if(global.frostfreeEndDate !== 'None') {
             return html`
                 <ha-card header="Heatger" >
                     <div class="card-content">
