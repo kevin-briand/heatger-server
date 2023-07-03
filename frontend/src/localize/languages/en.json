@@ -1,0 +1,43 @@
+{
+  "panel": {
+    "prog": {
+      "selectDays": "Select days",
+      "setTime": "Set time",
+      "setState": "Set State",
+      "day": "Day",
+      "time": "Time",
+      "state": "State"
+    },
+    "ip": {
+      "setName": "Set name",
+      "setIp": "Set ip",
+      "name": "Name",
+      "ip": "Ip"
+    },
+    "login": {
+      "unknownError": "Unknown error",
+      "username": "Username",
+      "password": "Password",
+      "connect": "Connect"
+    },
+    "add": "Add",
+    "delete": "Delete",
+    "deleteAll": "Delete all"
+  },
+  "state": {
+    "comfort": "Comfort",
+    "eco": "Eco",
+    "frostFree": "Frost-free"
+  },
+  "dayOfWeek": {
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday"
+  },
+  "zone": "Zone",
+  "error": "Error"
+}
