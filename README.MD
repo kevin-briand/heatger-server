@@ -8,7 +8,7 @@ features include :
  - electric meter input to track heating consumption
  - I2C for physical user interface(under development)
  - custom card for home assistant
- - custom panel for home assistant(coming soon)
+ - custom panel for home assistant
 
 ### table of contents
 - **[Install](#install)**
@@ -17,11 +17,19 @@ features include :
   - **[Network](#network)**
   - **[I2C](#i2c)**
   - **[Input](#input)**
+  - **[API](#API)**
   - **[Zone](#zone)**
 - **[custom card for home assistant](#heatger-card)**
   - **[Install](#install-1)**
   - **[use](#use)**
-- **[custom panel for home assistant(soon)](#heatger-panel)**
+- **[custom panel for home assistant](#heatger-panel)**
+  - **[Install](#install-2)**
+  - **[use](#use-1)**
+    - **[auth](#auth)**
+    - **[add a programme](#add-a-programme)**
+    - **[delete a program](#delete-a-programme)**
+    - **[add an ip](#add-an-ip)**
+    - **[delete an ip](#delete-an-ip)**
 
 # Install
 ```shell
@@ -50,14 +58,17 @@ You will need to provide your MQTT broker credentials.
 ---
 ### network
 This option allows you to enable network control and specify the IP address to use for the ping.
+
 ```json
 
 {
   "network": {
     "enabled": false,
     "ip": [
-      "ip1",
-      "ip2"
+      {
+        "name": "Ip1",
+        "ip": "192.168.1.2"
+      }
     ]
   }
 }
@@ -102,6 +113,17 @@ This option is for enabling input :
 }
 ```
 ---
+### API
+Credentials to access to the API. Required to use the panel.
+```json
+{
+  "api": {
+    "username": "admin",
+    "password": "password"
+  }
+}
+```
+---
 ### zone
 This option defines the zone, you can set up a maximum of 3 zones (2 by default).
 
@@ -137,7 +159,7 @@ parameters :
 ```
 
 # heatger card
-![img.png](img/img.png)
+![card.png](img/card.png)
 ## Install
 To install the custom heatger card in the home assistant, you need to copy heatger-card.js in the frontend folder to the /config/www/ folder in the home assistant (you can use the file editor in the home assistant).
 
@@ -158,4 +180,50 @@ To activate frost-free, select the end date and click Activate.
 when the frost-free is activated, the remaining time to the end is displayed and you can click on the stop button to stop the frost-free.
 
 # heatger panel
-Coming soon
+![panel.png](img/panel.png)
+## Install
+To install the custom heatger panel in the home assistant, you need to copy heatger-panel.js in the frontend folder to the /config/www/ folder in the home assistant (you can use the file editor in the home assistant).
+
+Then add the following config in the config.yaml and restart home assistant
+```yaml
+panel_custom:
+  - name: heatger-panel
+    url_path: heatger
+    sidebar_title: Heatger
+    sidebar_icon: mdi:radiator
+    module_url: /local/heatger-panel.js
+```
+After that you can see a new panel in the sidebar.
+
+In this panel you can add/remove programme in the zone 1 and/or zone 2, you can too add/remove ip to the scan list.
+
+## use
+This panel only works locally, you can't access it from the outside.
+
+### auth
+Before access to the panel, you need to provide your username/password. You can modify them in the config.json file.
+
+### add a programme
+- select one or more days(hold ctrl)
+- set the time to change the state
+- select the desired order
+- select the zone
+- click on the Add button
+
+Once the new programme has been successfully added, the table is automatically updated.
+You cannot add two programmes with the same day and same hour.
+
+### delete a programme
+If you click on a Delete button, it will delete the line on the server.(if successful, the table has will be updated automatically).
+
+If you want to delete all the programmes in the current zone(current tab selected), then click on the Delete all button.
+
+### add an ip
+- set the name of the ip
+- set the ip(xx.xx.xx.xx)
+- click on the Add button
+
+If successful, the table has will be updated automatically.
+
+### delete an ip
+To delete an ip, then click on the Delete button.
