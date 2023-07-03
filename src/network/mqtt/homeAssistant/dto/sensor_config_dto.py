@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from src.network.mqtt.generic_config_dto import GenericConfigDto
 from src.network.mqtt.homeAssistant.consts import SENSOR, DEVICE_MANUFACTURER, DEVICE_NAME
+from src.network.ping.ping import Ping
 
 
 @dataclass
@@ -25,7 +26,10 @@ class SensorConfigDto(GenericConfigDto):
             "device": {
                 "identifiers": ["heatger"],
                 "manufacturer": DEVICE_MANUFACTURER,
-                "name": DEVICE_NAME
+                "name": DEVICE_NAME,
+                "connections": [
+                    ["ip", Ping.get_ip()]
+                ]
             }
         }
         if self.device_class is not None:

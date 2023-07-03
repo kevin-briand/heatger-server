@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from src.network.mqtt.homeAssistant.consts import DEVICE_MANUFACTURER, DEVICE_NAME, BUTTON
 from src.network.mqtt.generic_config_dto import GenericConfigDto
+from src.network.ping.ping import Ping
 
 
 @dataclass
@@ -22,11 +23,13 @@ class ButtonConfigDto(GenericConfigDto):
             "payload_press": self.data,
             "os": 0,
             "retain": False,
-            "entity_category": "config",
             "device": {
                 "identifiers": ["heatger"],
                 "manufacturer": DEVICE_MANUFACTURER,
-                "name": DEVICE_NAME
+                "name": DEVICE_NAME,
+                "connections": [
+                    ["ip", Ping.get_ip()]
+                ]
             }
         }
         return response

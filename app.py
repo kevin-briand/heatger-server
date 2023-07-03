@@ -1,8 +1,11 @@
 """Heatger main app"""
 import datetime
 import json
+import platform
 import time
+from threading import Thread
 
+from src.network.api.api import Api
 from src.electricMeter.electric_meter import ElectricMeter
 from src.localStorage.config import Config
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
@@ -49,6 +52,23 @@ def on_mqtt_message(client, userdata, message):
             frostfree.stop()
 
 
+old_data = {}
+
+
+def refresh_mqtt_datas():
+    global old_data
+    while True:
+        data = {}
+        for zone in zones:
+            data.update(zone.get_data().to_object())
+        data.update(frostfree.get_data().to_object())
+        if data != old_data:
+            network.mqtt.publish_data(PUBLISH_DATA_SENSOR, json.dumps(data, cls=FileEncoder))
+            old_data = data
+        # network.mqtt.publish_data(PUBLISH_DATA_SENSOR, em.get_data())
+        time.sleep(0.5)
+
+
 if __name__ == '__main__':
     network = Network()
 
@@ -58,24 +78,25 @@ if __name__ == '__main__':
     mqtt_enabled = config.mqtt.enabled
 
     # TEST -----------------------------------------
+    minute = datetime.datetime.now().minute
     horaires = [
         HoraireDto(datetime.datetime.now().weekday(),
-                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute),
+                   datetime.time(datetime.datetime.now().hour, minute),
                    Orders.ECO),
         HoraireDto(datetime.datetime.now().weekday(),
-                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 1),
+                   datetime.time(datetime.datetime.now().hour, minute + 1 if minute + 1 <= 59 else minute + 1 - 60),
                    Orders.COMFORT),
         HoraireDto(datetime.datetime.now().weekday(),
-                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 2),
+                   datetime.time(datetime.datetime.now().hour, minute + 2 if minute + 2 <= 59 else minute + 2 - 60),
                    Orders.ECO),
         HoraireDto(datetime.datetime.now().weekday(),
-                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 3),
+                   datetime.time(datetime.datetime.now().hour, minute + 3 if minute + 3 <= 59 else minute + 3 - 60),
                    Orders.COMFORT),
         HoraireDto(datetime.datetime.now().weekday(),
-                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 4),
+                   datetime.time(datetime.datetime.now().hour, minute + 4 if minute + 4 <= 59 else minute + 4 - 60),
                    Orders.ECO),
         HoraireDto(datetime.datetime.now().weekday(),
-                   datetime.time(datetime.datetime.now().hour, datetime.datetime.now().minute + 5),
+                   datetime.time(datetime.datetime.now().hour, minute + 5 if minute + 5 <= 59 else minute + 5 - 60),
                    Orders.COMFORT)
     ]
     Config().remove_all_horaire("zone1")
@@ -104,14 +125,12 @@ if __name__ == '__main__':
 
     frostfree.restore()
 
-    old_data = {}
-    while True:
-        data = {}
-        for zone in zones:
-            data.update(zone.get_data().to_object())
-        data.update(frostfree.get_data().to_object())
-        if data != old_data:
-            network.mqtt.publish_data(PUBLISH_DATA_SENSOR, json.dumps(data, cls=FileEncoder))
-            old_data = data
-        # network.mqtt.publish_data(PUBLISH_DATA_SENSOR, em.get_data())
-        time.sleep(0.5)
+    refresh_mqtt_datas = Thread(target=refresh_mqtt_datas)
+    refresh_mqtt_datas.start()
+
+    api = None
+    if platform.system().lower() != 'windows':
+        api = Api().start()
+    else:
+        api = Api().start_debug()
+

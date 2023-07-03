@@ -8,9 +8,11 @@
   },
   "network": {
     "enabled": false,
-    "ip": [
-      "127.0.0.1"
-    ]
+    "ip": []
+  },
+  "api": {
+    "username": "admin",
+    "password": "password"
   },
   "i2c": {
     "temperature": {

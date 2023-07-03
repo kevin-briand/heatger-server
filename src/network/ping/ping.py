@@ -28,6 +28,10 @@ class Ping(Thread):
         self.stop_ping = False
         network_config = Config().get_config().network
         ip_list = network_config.ip
+        if len(ip_list) == 0:
+            Ping.scanning_in_progress = False
+            self.callback()
+            return
         while network_config.enabled:
             if self.stop_ping:
                 Ping.scanning_in_progress = False
@@ -35,8 +39,8 @@ class Ping(Thread):
             ips_found = self.scan(self.get_ip() + '/24')
             for ip in ip_list:
                 try:
-                    ips_found.index(ip)
-                    Logs.info(self.zone_id, F'ip {ip} found !')
+                    ips_found.index(ip.ip)
+                    Logs.info(self.zone_id, F'device {ip.name} found !')
                     self.stop_ping = True
                     self.callback()
                     break

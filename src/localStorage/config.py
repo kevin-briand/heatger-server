@@ -1,6 +1,7 @@
 """Config class"""
 from src.localStorage.dto.config_dto import ConfigDto
 from src.localStorage.local_storage import LocalStorage
+from src.network.dto.ip_dto import IpDto
 from src.shared.logs.logs import Logs
 from src.zone.dto.horaire_dto import HoraireDto
 
@@ -30,34 +31,39 @@ class Config(LocalStorage):
         """write a ConfigDto object to file"""
         self.write(config)
 
-    def add_ip(self, ip: str):
+    def add_ip(self, ip: IpDto):
         """Adding ip to scanned ip list"""
         from src.network.ping.ping import Ping
-        if not Ping.is_valid_ip(ip):
+        if not Ping.is_valid_ip(ip.ip):
             Logs.error(CLASSNAME, 'Bad ip format !')
             return
 
         config = self.get_config()
         network_config = config.network
         ips_list = network_config.ip
-        if ip in ips_list:
-            Logs.error(CLASSNAME, 'Ip already exist !')
-            return
+        for ip_in_config in ips_list:
+            if ip_in_config.ip == ip.ip:
+                Logs.error(CLASSNAME, 'Ip already exist !')
+                return
 
         ips_list.append(ip)
         self.save_data(config)
 
-    def remove_ip(self, ip: str):
+    def remove_ip(self, ip: IpDto):
         """removing ip to scanned ip list"""
         from src.network.ping.ping import Ping
-        if not Ping.is_valid_ip(ip):
+        if not Ping.is_valid_ip(ip.ip):
             Logs.error(CLASSNAME, 'Bad ip format !')
             return
 
         config = self.get_config()
         network_config = config.network
         ips_list = network_config.ip
-        ips_list.remove(ip)
+        ip_with_horaire_removed = []
+        for ip_in_config in ips_list:
+            if ip_in_config.ip != ip.ip:
+                ip_with_horaire_removed.append(ip_in_config)
+        network_config.ip = ip_with_horaire_removed
         self.save_data(config)
 
     def add_horaire(self, zone_id: str, horaire: HoraireDto):
@@ -105,9 +111,12 @@ class Config(LocalStorage):
             Logs.error(CLASSNAME, 'Zone not found !')
             return
         prog = zone.prog
-        if horaire.horaire_to_object() in prog:
-            prog.remove(horaire.horaire_to_object())
-            self.save_data(config)
+        prog_with_horaire_removed = []
+        for hor in prog:
+            if hor.to_value() != horaire.to_value():
+                prog_with_horaire_removed.append(hor)
+        zone.prog = prog_with_horaire_removed
+        self.save_data(config)
 
     def remove_all_horaire(self, zone_id: str):
         """removing all horaire to prog list"""
