@@ -27,7 +27,7 @@
   "state": {
     "comfort": "Confort",
     "eco": "Eco",
-    "frostFree": "Hors-gel"
+    "frostfree": "Hors-gel"
   },
   "dayOfWeek": {
     "monday": "Lundi",
@@ -39,5 +39,20 @@
     "sunday": "Dimanche"
   },
   "zone": "Zone",
-  "error": "Erreur"
+    "error": "Erreur",
+  "card": {
+    "mode": "Mode",
+    "timeout": "Temps restant",
+    "frostFree": {
+      "title": "Hors-gel activé",
+      "stop": "Stop",
+      "activate": "Activation",
+      "endDate": "Date fin",
+      "frostFree": "Hors-gel"
+    }
+  },
+  "mode": {
+    "auto": "Auto",
+    "manual": "Manuel"
+  }
 }

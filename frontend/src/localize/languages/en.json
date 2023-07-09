@@ -39,5 +39,20 @@
     "sunday": "Sunday"
   },
   "zone": "Zone",
-  "error": "Error"
+  "error": "Error",
+  "card": {
+    "mode": "Mode",
+    "timeout": "timeout",
+    "frostFree": {
+      "title": "Frost-free activated",
+      "stop": "Stop",
+      "activate": "Activate",
+      "endDate": "End date",
+      "frostFree": "Frost-free"
+    }
+  },
+  "mode": {
+    "auto": "Auto",
+    "manual": "Manual"
+  }
 }

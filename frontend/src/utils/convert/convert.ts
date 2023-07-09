@@ -1,4 +1,4 @@
-import {localize} from "../../../localize/localize";
+import {localize} from "../../localize/localize";
 
 export const dayToStr = (day: number, language: string) => {
     switch (day) {
@@ -28,4 +28,20 @@ export const progToNumber = (day: number, hour: string): number => {
         return day * 100 + parseInt(splitedHour.at(0) ?? '') * 10 + parseInt(splitedHour.at(1) ?? '');
     }
     return -1;
+}
+
+export const remainingTime = (nextChange: Date) => {
+    if(nextChange.toDateString() === 'Invalid Date')
+        return 'Never';
+    let date = new Date(nextChange.valueOf() - Date.now());
+    if (date.getUTCDate() > 10) {
+        date = new Date('2023-01-01T00:00:00');
+    }
+    if (date.getUTCDate() > 1 && date.getUTCDate() < 8) {
+        return `${date.getUTCDate()-1}j ${date.getUTCHours()}h`;
+    }
+    if (date.getUTCHours() > 0 && date.getUTCDate() === 1) {
+        return `${date.getUTCHours()}h ${date.getUTCMinutes()}m`;
+    }
+    return `${date.getUTCMinutes()}m  ${date.getUTCSeconds()}s`;
 }
