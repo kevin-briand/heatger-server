@@ -1,4 +1,4 @@
-import {css, CSSResultGroup, html, LitElement} from "lit";
+import {CSSResultGroup, html, LitElement} from "lit";
 import {HomeAssistant, Panel} from "custom-card-helpers";
 import {customElement, property, state} from 'lit/decorators.js';
 import './table_ip'
@@ -9,6 +9,7 @@ import {getAllIpQuery} from "../api/ip/queries/get_all_ip_query";
 import {createIpQuery} from "../api/ip/queries/create_ip_query";
 import {deleteIpQuery} from "../api/ip/queries/delete_ip_query";
 import {localize} from "../../localize/localize";
+import {style} from "../../style";
 
 @customElement('heatger-ip-card')
 export class HeatgerIpCard extends LitElement {
@@ -67,15 +68,15 @@ export class HeatgerIpCard extends LitElement {
                 <div class="card-content">
                     <div class="content">
                         <form>
-                            <div class="row">
+                            <div class="flexRow">
                                 <label for="ipName">${localize('panel.ip.setName', this.hass.language)}</label>
                                 <input type="text" name="ipName" id="ipName">
                             </div>
-                            <div class="row">
+                            <div class="flexRow">
                                 <label for="ip">${localize('panel.ip.setIp', this.hass.language)}</label>
                                 <input type="text" name="ip" id="ip">
                             </div>
-                            <div class="row row-center">
+                            <div class="flexRow flexRow-center">
                                 <mwc-button @click='${this.handleAdd}' class="button" id="add">
                                     ${localize('panel.add', this.hass.language)}
                                 </mwc-button>
@@ -90,44 +91,6 @@ export class HeatgerIpCard extends LitElement {
     }
 
     static get styles(): CSSResultGroup {
-        return css`
-          ha-card {
-            display: flex;
-            flex-direction: column;
-            margin: 5px;
-            max-width: calc(100vw - 10px);
-          }
-          
-          h2 {
-            text-align: center;
-          }
-          
-          form {
-            display: flex;
-            flex-direction: column;
-          }
-          
-          label {
-            width: 120px;
-          }
-          
-          .row {
-            display: flex;
-            margin-bottom: 0.5rem;
-            justify-content: center;
-          }
-          
-          .row-center {
-            justify-content: center;
-          }
-
-          select, input {
-            background-color: var(--mdc-text-field-fill-color);
-            flex-grow: 1;
-            border: none;
-            border-radius: 5px;
-            padding: 5px;
-          }
-        `;
+        return style;
     }
 }

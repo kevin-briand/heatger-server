@@ -1,6 +1,6 @@
 import axios, {Axios, isAxiosError} from "axios";
 import {HomeAssistant} from "custom-card-helpers";
-import {Storage} from "../shared/storage/storage";
+import {Storage} from "../../utils/storage/storage";
 
 
 export class HeatgerBackend extends Axios {

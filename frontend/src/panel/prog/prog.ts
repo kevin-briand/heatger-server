@@ -1,4 +1,4 @@
-import {css, CSSResultGroup, html, LitElement} from "lit";
+import {CSSResultGroup, html, LitElement} from "lit";
 import {HomeAssistant, Panel} from "custom-card-helpers";
 import {customElement, property, state} from 'lit/decorators.js';
 import {getProgQuery} from "../api/prog/queries/get_prog_query";
@@ -10,6 +10,7 @@ import {AxiosError} from "axios";
 import {createProgQuery} from "../api/prog/queries/create_prog_query";
 import {deleteAllProgQuery} from "../api/prog/queries/delete_all_prog_query";
 import {localize} from "../../localize/localize";
+import {style} from "../../style";
 
 @customElement('heatger-prog-card')
 export class HeatgerProgCard extends LitElement {
@@ -89,7 +90,7 @@ export class HeatgerProgCard extends LitElement {
                 <div class="card-content">
                     <div class="content">
                         <form>
-                            <div class="row">
+                            <div class="flexRow">
                                 <label for="days">${localize('panel.prog.selectDays', this.hass.language)}</label>
                                 <select name="days" id="days" multiple>
                                     <option value="0">${localize('dayOfWeek.monday', this.hass.language)}</option>
@@ -101,25 +102,25 @@ export class HeatgerProgCard extends LitElement {
                                     <option value="6">${localize('dayOfWeek.sunday', this.hass.language)}</option>
                                 </select>
                             </div>
-                            <div class="row">
+                            <div class="flexRow">
                                 <label for="time">${localize('panel.prog.setTime', this.hass.language)}</label>
                                 <input type="time" name="time" id="time">
                             </div>
-                            <div class="row">
+                            <div class="flexRow">
                                 <label for="state">${localize('panel.prog.setState', this.hass.language)}</label>
                                 <select name="state" id="state">
                                     <option value="0">${localize('state.comfort', this.hass.language)}</option>
                                     <option value="1">${localize('state.eco', this.hass.language)}</option>
                                 </select>
                             </div>
-                            <div class="row">
+                            <div class="flexRow">
                                 <label for="zone">${localize('zone', this.hass.language)}</label>
                                 <select name="zone" id="zone">
                                     <option value="1">${localize('zone', this.hass.language)} 1</option>
                                     <option value="2">${localize('zone', this.hass.language)} 2</option>
                                 </select>
                             </div>
-                            <div class="row row-center">
+                            <div class="flexRow flexRow-center">
                                 <mwc-button @click='${this.handleAdd}' class="button" id="add">
                                     ${localize('panel.add', this.hass.language)}
                                 </mwc-button>
@@ -144,44 +145,6 @@ export class HeatgerProgCard extends LitElement {
     }
 
     static get styles(): CSSResultGroup {
-        return css`
-          ha-card {
-            display: flex;
-            flex-direction: column;
-            margin: 5px;
-            max-width: calc(100vw - 10px);
-          }
-          
-          h2 {
-            text-align: center;
-          }
-          
-          form {
-            display: flex;
-            flex-direction: column;
-          }
-          
-          label {
-            width: 120px;
-          }
-          
-          .row {
-            display: flex;
-            margin-bottom: 0.5rem;
-            justify-content: center;
-          }
-          
-          .row-center {
-            justify-content: center;
-          }
-
-          select, input {
-            background-color: var(--mdc-text-field-fill-color);
-            flex-grow: 1;
-            border: none;
-            border-radius: 5px;
-            padding: 5px;
-          }
-        `;
+        return style;
     }
 }

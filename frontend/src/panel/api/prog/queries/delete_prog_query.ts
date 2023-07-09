@@ -1,7 +1,7 @@
 import {HeatgerBackend} from "../../heatger_backend";
 import {HomeAssistant} from "custom-card-helpers";
 import {Prog} from "../dto/prog";
-import {progToNumber} from "../../../shared/convert/convert";
+import {progToNumber} from "../../../../utils/convert/convert";
 
 
 export async function deleteProgQuery(hass: HomeAssistant, zoneNumber: number, prog: Prog): Promise<Prog[]> {

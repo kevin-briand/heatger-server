@@ -1,9 +1,10 @@
-import {css, CSSResultGroup, html, LitElement} from "lit";
+import {CSSResultGroup, html, LitElement} from "lit";
 import {customElement, property} from 'lit/decorators.js';
 import {Prog} from "../api/prog/dto/prog";
-import {dayToStr, orderToStr} from "../shared/convert/convert";
+import {dayToStr, orderToStr} from "../../utils/convert/convert";
 import {localize} from "../../localize/localize";
 import {HomeAssistant} from "custom-card-helpers";
+import {style} from "../../style";
 
 @customElement('heatger-prog-table')
 export class HeatgerProgTable extends LitElement {
@@ -55,23 +56,6 @@ export class HeatgerProgTable extends LitElement {
     }
 
     static get styles(): CSSResultGroup {
-        return css`
-          table {
-            margin-top: 1rem;
-            width: 100%;
-          }
-
-          thead td {
-            font-weight: bold;
-          }
-          
-          td {
-            width: 25%;
-          }
-          
-          tr td:last-child {
-            text-align: right;
-          }
-        `;
+        return style;
     }
 }

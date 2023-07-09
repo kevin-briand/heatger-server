@@ -1,9 +1,10 @@
-import {css, CSSResultGroup, html, LitElement} from "lit";
+import {CSSResultGroup, html, LitElement} from "lit";
 import {HomeAssistant, Panel} from "custom-card-helpers";
 import {customElement, property} from 'lit/decorators.js';
 import {LoginQuery} from "../api/login/query/login_query";
 import {isAxiosError} from "axios";
 import {localize} from "../../localize/localize";
+import {style} from "../../style";
 
 @customElement('heatger-login-card')
 export class HeatgerLoginCard extends LitElement {
@@ -37,10 +38,14 @@ export class HeatgerLoginCard extends LitElement {
                 <div class="card-content">
                     <div class="content">
                         <form>
-                            <label for="username">${localize('panel.login.username', this.hass.language)}</label>
-                            <input type="text" name="username" id="username">
-                            <label for="password">${localize('panel.login.password', this.hass.language)}</label>
-                            <input type="password" name="password" id="password">
+                            <div class="flexRow">
+                                <label for="username">${localize('panel.login.username', this.hass.language)}</label>
+                                <input type="text" name="username" id="username">
+                            </div>
+                            <div class="flexRow">
+                                <label for="password">${localize('panel.login.password', this.hass.language)}</label>
+                                <input type="password" name="password" id="password">
+                            </div>
                             <mwc-button @click='${this.handleConnect}' class="button" id="connect">
                                 ${localize('panel.login.connect', this.hass.language)}
                             </mwc-button>
@@ -53,52 +58,6 @@ export class HeatgerLoginCard extends LitElement {
     }
 
     static get styles(): CSSResultGroup {
-        return css`
-          ha-card {
-            display: flex;
-            flex-direction: column;
-            margin: 5px;
-            max-width: calc(100vw - 10px);
-          }
-          
-          h2 {
-            text-align: center;
-          }
-          
-          form {
-            display: flex;
-            flex-direction: column;
-          }
-          
-          label {
-            width: 120px;
-          }
-          
-          .row {
-            display: flex;
-            margin-bottom: 0.5rem;
-            justify-content: center;
-          }
-          
-          .row-center {
-            justify-content: center;
-          }
-          
-          table {
-            width: 100%;
-          }
-          
-          select, input {
-            background-color: var(--mdc-text-field-fill-color);
-            flex-grow: 1;
-            border: none;
-            border-radius: 5px;
-            padding: 5px;
-          }
-
-          #state option {
-            background-color: var(--mdc-text-field-fill-color);
-          }
-        `;
+        return style;
     }
 }

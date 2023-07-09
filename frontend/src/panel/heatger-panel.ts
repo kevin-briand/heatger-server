@@ -35,7 +35,7 @@ export class HeatgerPanel extends LitElement {
         `;
     }
 
-    reload() {
+    reload(): void {
         this.requestUpdate();
     }
 
@@ -72,6 +72,11 @@ export class HeatgerPanel extends LitElement {
             line-height: 20px;
             flex-grow: 1;
           }
+          .version {
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(var(--rgb-text-primary-color), 0.9);
+          }
           .view {
             height: calc(100vh - 112px);
             display: flex;
@@ -83,11 +88,6 @@ export class HeatgerPanel extends LitElement {
           }
           .view > *:last-child {
             margin-bottom: 20px;
-          }
-          .version {
-            font-size: 14px;
-            font-weight: 500;
-            color: rgba(var(--rgb-text-primary-color), 0.9);
           }
     `;
     }

@@ -1,8 +1,9 @@
-import {css, CSSResultGroup, html, LitElement} from "lit";
+import {CSSResultGroup, html, LitElement} from "lit";
 import {customElement, property} from 'lit/decorators.js';
 import {IpDto} from "../api/ip/dto/ip_dto";
 import {localize} from "../../localize/localize";
 import {HomeAssistant} from "custom-card-helpers";
+import {style} from "../../style";
 
 @customElement('heatger-ip-table')
 export class HeatgerIpTable extends LitElement {
@@ -52,23 +53,6 @@ export class HeatgerIpTable extends LitElement {
     }
 
     static get styles(): CSSResultGroup {
-        return css`
-          table {
-            margin-top: 1rem;
-            width: 100%;
-          }
-
-          thead td {
-            font-weight: bold;
-          }
-          
-          td {
-            width: 25%;
-          }
-          
-          tr td:last-child {
-            text-align: right;
-          }
-        `;
+        return style;
     }
 }
