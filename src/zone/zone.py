@@ -61,6 +61,8 @@ class Zone(Base):
 
     def on_ip_found(self):
         """Called when ip found on network(Ping class)"""
+        if not self.is_ping:
+            return
         self.is_ping = False
         self.set_order(Orders.COMFORT)
 

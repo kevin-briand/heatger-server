@@ -19,7 +19,8 @@ class Middleware:
         res.headers['Access-Control-Allow-Origin'] = '*'
         return res(environ, start_response)
 
-    def check_auth(self, request):
+    @staticmethod
+    def check_auth(request):
         auth = request.headers.get('Authorization', None)
         if request.path == '/login':
             return True

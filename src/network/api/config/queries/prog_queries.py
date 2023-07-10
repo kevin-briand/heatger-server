@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 from flask import abort, Blueprint, request
 
@@ -31,7 +32,7 @@ def post_prog(zone=None):
 def delete_prog(zone, value: str):
     try:
         prog = getattr(Config().get_config(), zone).prog
-        result_horaire: HoraireDto = None
+        result_horaire: Optional[HoraireDto] = None
         for horaire in prog:
             if horaire.to_value() == int(value):
                 result_horaire = horaire

@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 from flask import abort, Blueprint, request
 
@@ -29,7 +30,7 @@ def post_ip():
 
 @ip_bp.delete("/ip/<ip>")
 def delete_ip(ip: str):
-    result_ip: IpDto = None
+    result_ip: IpDto = Optional[None]
     for ip_in_config in Config().get_config().network.ip:
         if ip_in_config.ip == ip:
             result_ip = ip_in_config
