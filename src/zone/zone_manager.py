@@ -17,12 +17,12 @@ from src.zone.zone import Zone
 
 
 class ZoneManager(Thread):
-    def __init__(self, network: Network):
+    def __init__(self):
         super().__init__()
         self.zones: list[Zone] = []
         self.frostfree: Optional[Frostfree] = None
         self.current_datas = {}
-        self.network = network
+        self.network = Network.get_instance()
         self.update_datas_timer = Timer()
 
     def init_zones(self):
@@ -50,13 +50,12 @@ class ZoneManager(Thread):
         mqtt_enabled = Config().get_config().mqtt.enabled
         self.frostfree.restore()
         if mqtt_enabled:
-            self.network.mqtt.init_subscribe_global()
-            self.network.mqtt.init_publish_global()
-            self.network.mqtt.init_publish_i2c()
-            self.network.mqtt.set_on_message(self.on_mqtt_message)
+            self.network.mqtt.init_subscribe_frostfree()
+            self.network.mqtt.init_publish_frostfree()
+            self.network.mqtt.subcribe_on_message(self.on_mqtt_message)
             Thread(target=self.refresh_mqtt_datas).start()
 
-    def on_mqtt_message(self, client, userdata, message):
+    def on_mqtt_message(self, message):
         """processing of messages received by mqtt"""
         if message.retain:
             return

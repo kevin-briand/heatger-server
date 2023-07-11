@@ -37,10 +37,6 @@ class HomeAssistant(Mqtt):
         """function called when mqtt successfully connected"""
         Logs.info(CLASSNAME, "Connected")
 
-    def on_message(self, client, userdata, message):
-        """function called when mqtt receipt a message (default function)"""
-        Logs.info(CLASSNAME, message.topic)
-
     def publish_data(self, url: str, data: str):
         """Send data to the broker"""
         if self.enabled:
@@ -79,19 +75,18 @@ class HomeAssistant(Mqtt):
         ]
         self.publish_config(config)
 
-    def init_publish_global(self):
-        """initialise global sensors"""
-        Logs.info(CLASSNAME, 'publish - global sensors')
+    def init_publish_frostfree(self):
+        """initialise frostfree sensors"""
+        Logs.info(CLASSNAME, 'publish - frostfree sensors')
         publish_config = [
             SensorConfigDto(FROSTFREE, CLASS_GENERIC).to_object(),
-            SensorConfigDto(ELECTRIC_METER, CLASS_ENERGY, WH, TOTAL_INCREASING).to_object(),
             ButtonConfigDto(FROSTFREE).to_object()
         ]
         self.publish_config(publish_config)
 
-    def init_subscribe_global(self):
-        """initialise global buttons"""
-        Logs.info(CLASSNAME, 'subscribe - global buttons')
+    def init_subscribe_frostfree(self):
+        """initialise frostfree button"""
+        Logs.info(CLASSNAME, 'subscribe - frostfree button')
         self.client.subscribe(BUTTON + BUTTON_FROSTFREE + '/commands')
 
     def init_subscribe_zone(self, name: str):
@@ -99,3 +94,8 @@ class HomeAssistant(Mqtt):
         Logs.info(CLASSNAME, F'subscribe - buttons {name}')
         self.client.subscribe(BUTTON + F'{name}_' + SWITCH_MODE + '/commands')
         self.client.subscribe(BUTTON + F'{name}_' + SWITCH_STATE + '/commands')
+
+    def init_publish_electric_meter(self):
+        """initialise electric meter sensor"""
+        Logs.info(CLASSNAME, 'publish - electric meter sensor')
+        self.publish_config([SensorConfigDto(ELECTRIC_METER, CLASS_ENERGY, WH, TOTAL_INCREASING).to_object()])

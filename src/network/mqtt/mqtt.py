@@ -2,15 +2,16 @@
 import abc
 import socket
 from threading import Thread
+from typing import List
 
 import paho.mqtt.client as mqtt
 
-from src.network.mqtt.homeAssistant.dto.sensor_config_dto import SensorConfigDto
 from src.shared.logs.logs import Logs
 
 
 class Mqtt(Thread, metaclass=abc.ABCMeta):
     """Abstract class"""
+
     def __init__(self, host: str, port: int, username: str, password: str, classname: str):
         super().__init__()
         self.client = mqtt.Client()
@@ -21,12 +22,13 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
         self.username = username
         self.password = password
         self.classname = classname
+        self.on_message_subcriber = []
 
     def is_connected(self) -> bool:
         """return true if mqtt is connected"""
         return self.client.is_connected()
 
-    def publish_config(self, data: [SensorConfigDto]):
+    def publish_config(self, data: List):
         """publish data list"""
         for publish_config in data:
             self.client.publish(publish_config.get('url'), publish_config.get('payload'))
@@ -40,25 +42,30 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
                 self.client.connect(self.host, self.port)
                 break
             except socket.timeout:
-                Logs.error(self.classname, F'Fail to connect - attempt {i+1}/3')
+                Logs.error(self.classname, F'Fail to connect - attempt {i + 1}/3')
 
     def run(self) -> None:
         self.connect()
         self.client.loop_forever(retry_first_connection=True)
 
-    def set_on_message(self, on_message):
-        """override default on_message function"""
-        self.client.on_message = on_message
+    def subcribe_on_message(self, callback):
+        """subscribe to on_message function"""
+        self.on_message_subcriber.append(callback)
+
+    def unsubcribe_on_message(self, callback):
+        """unsubscribe to on_message function"""
+        self.on_message_subcriber.remove(callback)
 
     @abc.abstractmethod
     def on_connect(self, client, userdata, flags, rc):
         """function called when mqtt successfully connected"""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    # pylint: disable=unused-argument
     def on_message(self, client, userdata, message):
-        """function called when mqtt receipt a message (default function)"""
-        raise NotImplementedError
+        """function called when mqtt receipt a message"""
+        for callback in self.on_message_subcriber:
+            callback(message)
 
     @abc.abstractmethod
     def publish_data(self, url: str, data: str):

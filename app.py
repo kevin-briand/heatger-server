@@ -5,7 +5,6 @@ import platform
 from src.network.api.api import Api
 from src.electricMeter.electric_meter import ElectricMeter
 from src.localStorage.config import Config
-from src.network.network import Network
 from src.shared.enum.orders import Orders
 from src.zone.dto.horaire_dto import HoraireDto
 from src.zone.zone_manager import ZoneManager
@@ -37,8 +36,7 @@ if __name__ == '__main__':
     Config().add_horaires('zone1', horaires)
     # ---------------------------------------------
 
-    network = Network()
-    zone_manager = ZoneManager(network)
+    zone_manager = ZoneManager()
     zone_manager.start()
 
     em = ElectricMeter()
