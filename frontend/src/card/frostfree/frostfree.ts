@@ -65,10 +65,10 @@ export class HeatgerFrostfree extends LitElement {
             <div class="grow">
                 <h2>${localize("card.frostFree.frostFree", this.hass.language)}</h2>
                 <form>
-                    <div class="grid-container">
-                        <label class="grid-item" for="endDate">${localize("card.frostFree.endDate", this.hass.language)}</label>
-                        <input class="grid-item" type="datetime-local" id="endDate">
-                        <mwc-button @click='${this.handleFrostFree}' class="button grid-item">
+                    <div class="flex row"">
+                        <label for="endDate">${localize("card.frostFree.endDate", this.hass.language)}</label>
+                        <input class="grow" type="datetime-local" id="endDate">
+                        <mwc-button @click='${this.handleFrostFree}' class="button">
                             ${localize("card.frostFree.activate", this.hass.language)}
                         </mwc-button>
                     </div>
@@ -84,15 +84,6 @@ export class HeatgerFrostfree extends LitElement {
             height: 40px;
             background-color: var(--card-background-color);
             border: 0;
-          }
-          .grid-container {
-            height: 40px;
-            display: grid;
-            grid-template-columns: auto auto auto;
-            column-gap: 0.5rem;
-          }
-          .grid-item {
-            align-self: center;
           }
         `;
     }

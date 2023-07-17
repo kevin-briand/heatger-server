@@ -108,10 +108,10 @@
             <div class="grow">
                 <h2>${Zt("card.frostFree.frostFree",this.hass.language)}</h2>
                 <form>
-                    <div class="grid-container">
-                        <label class="grid-item" for="endDate">${Zt("card.frostFree.endDate",this.hass.language)}</label>
-                        <input class="grid-item" type="datetime-local" id="endDate">
-                        <mwc-button @click='${this.handleFrostFree}' class="button grid-item">
+                    <div class="flex row"">
+                        <label for="endDate">${Zt("card.frostFree.endDate",this.hass.language)}</label>
+                        <input class="grow" type="datetime-local" id="endDate">
+                        <mwc-button @click='${this.handleFrostFree}' class="button">
                             ${Zt("card.frostFree.activate",this.hass.language)}
                         </mwc-button>
                     </div>
@@ -123,15 +123,6 @@
             height: 40px;
             background-color: var(--card-background-color);
             border: 0;
-          }
-          .grid-container {
-            height: 40px;
-            display: grid;
-            grid-template-columns: auto auto auto;
-            column-gap: 0.5rem;
-          }
-          .grid-item {
-            align-self: center;
           }
         `}};qt([pe()],Jt.prototype,"hass",void 0),qt([pe()],Jt.prototype,"activated",void 0),qt([pe()],Jt.prototype,"endDate",void 0),Jt=qt([ce("heatger-frostfree")],Jt);var Qt=function(e,t,r,i){var n,s=arguments.length,o=s<3?t:null===i?i=Object.getOwnPropertyDescriptor(t,r):i;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)o=Reflect.decorate(e,t,r,i);else for(var a=e.length-1;a>=0;a--)(n=e[a])&&(o=(s<3?n(o):s>3?n(t,r,o):n(t,r))||o);return s>3&&o&&Object.defineProperty(t,r,o),o};let er=class extends he{constructor(){super(),Object.defineProperty(this,"hass",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"zones",{enumerable:!0,configurable:!0,writable:!0,value:[]}),Object.defineProperty(this,"blinkBtnEverySeconds",{enumerable:!0,configurable:!0,writable:!0,value:!0}),Object.defineProperty(this,"createTextLine",{enumerable:!0,configurable:!0,writable:!0,value:(e,t)=>j`
             <p class="flex row">
@@ -161,7 +152,7 @@
             `),j`
             ${e}
             <heatger-frostfree .hass="${this.hass}" .activated="${this.activateFrostFree.bind(this)}"></heatger-frostfree>
-        `}updateComponents(){var e,t;const r=[];let i=1;for(;null!=this.hass.states[`sensor.zone${i}_name`];)r.push({id:`zone${i}`,name:this.hass.states[`sensor.zone${i}_name`].state,state:null!==(e=Object.values(tr).find((e=>e===this.hass.states[`sensor.zone${i}_state`].state)))&&void 0!==e?e:tr.COMFORT,mode:null!==(t=Object.values(rr).find((e=>e===this.hass.states[`sensor.zone${i}_mode`].state)))&&void 0!==t?t:rr.AUTO,nextChange:new Date(this.hass.states[`sensor.zone${i}_next_change`].state),isPing:"true"===this.hass.states[`sensor.zone${i}_is_ping`].state.toLowerCase()}),i++;const n=this.shadowRoot.querySelector("heatger-zone");n&&(n.setZones(r),this.frostFreeActivated||n.requestUpdate());let s=new Date(this.hass.states["sensor.frostfree"].state);"Invalid Date"===s.toDateString()&&(s=void 0);const o=this.shadowRoot.querySelector("heatger-frostfree");o&&(o.endDate,o.setEndDate(s),o.requestUpdate())}render(){return j`
+        `}updateComponents(){var e,t;const r=[];let i=1;for(;null!=this.hass.states[`sensor.zone${i}_name`];)r.push({id:`zone${i}`,name:this.hass.states[`sensor.zone${i}_name`].state,state:null!==(e=Object.values(tr).find((e=>e===this.hass.states[`sensor.zone${i}_state`].state)))&&void 0!==e?e:tr.COMFORT,mode:null!==(t=Object.values(rr).find((e=>e===this.hass.states[`sensor.zone${i}_mode`].state)))&&void 0!==t?t:rr.AUTO,nextChange:new Date(this.hass.states[`sensor.zone${i}_next_change`].state),isPing:"true"===this.hass.states[`sensor.zone${i}_is_ping`].state.toLowerCase()}),i++;const n=this.shadowRoot.querySelector("heatger-zone");n&&(n.setZones(r),this.frostFreeActivated||n.requestUpdate());let s=new Date(this.hass.states["sensor.frostfree"].state);"Invalid Date"===s.toDateString()&&(s=void 0);const o=this.shadowRoot.querySelector("heatger-frostfree");o&&(o.setEndDate(s),o.requestUpdate())}render(){return j`
             <ha-card header="Heatger" >
                 <div class="card-content">
                     ${this.getComponents()}
