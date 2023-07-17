@@ -12,6 +12,8 @@ class ApiDto:
         self.password = password
 
     def to_object(self):
+
+        """return an object of this class"""
         return {
             "username": self.username,
             "password": self.password

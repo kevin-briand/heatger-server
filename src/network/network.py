@@ -19,6 +19,7 @@ class Network:
 
     @staticmethod
     def get_instance() -> 'Network':
+        """Return an instance of this class"""
         if not Network._instance:
             Network._instance = Network()
         return Network._instance

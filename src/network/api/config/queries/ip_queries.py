@@ -1,3 +1,4 @@
+"""Ip config Blueprint"""
 import json
 from typing import Optional
 
@@ -12,25 +13,26 @@ ip_bp = Blueprint('ip', __name__)
 
 @ip_bp.get("/ip")
 def get_ip():
-    try:
-        return json.dumps(Config().get_config().network.ip, cls=FileEncoder)
-    except TypeError:
-        abort(404)
+    """Return a list of IpDto"""
+    return json.dumps(Config().get_config().network.ip, cls=FileEncoder)
 
 
 @ip_bp.post("/ip")
 def post_ip():
+    """Add an ip in list, return the updated list"""
     if request.json is not None:
         try:
             Config().add_ip(IpDto.object_to_ip_dto(request.json))
             return json.dumps(Config().get_config().network.ip, cls=FileEncoder)
-        except TypeError:
-            abort(404)
+        except AttributeError:
+            abort(400)
+    abort(400)
 
 
 @ip_bp.delete("/ip/<ip>")
 def delete_ip(ip: str):
-    result_ip: IpDto = Optional[None]
+    """remove an ip in list, return the updated list"""
+    result_ip: Optional[IpDto] = None
     for ip_in_config in Config().get_config().network.ip:
         if ip_in_config.ip == ip:
             result_ip = ip_in_config

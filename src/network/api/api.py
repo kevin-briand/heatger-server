@@ -1,3 +1,4 @@
+"""API Client"""
 import os
 
 from flask import Flask
@@ -15,6 +16,7 @@ BLUEPRINTS = [prog_bp, login_bp, ip_bp]
 
 
 class Api:
+    """API Class"""
     def __init__(self):
         app = Flask(__name__, instance_relative_config=True)
         Logs.info(CLASSNAME, 'init')
@@ -30,9 +32,11 @@ class Api:
         self.application = app
 
     def start(self):
+        """Start API server with waitress"""
         Logs.info(CLASSNAME, 'Started')
         serve(self.application, host='0.0.0.0', port=5000, url_prefix='/')
 
     def start_debug(self):
+        """Start flask API server"""
         Logs.info(CLASSNAME, 'Started')
         self.application.run(host='0.0.0.0')

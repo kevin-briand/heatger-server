@@ -3,8 +3,7 @@ import json
 from dataclasses import dataclass
 
 from src.network.mqtt.generic_config_dto import GenericConfigDto
-from src.network.mqtt.homeAssistant.consts import SENSOR, DEVICE_MANUFACTURER, DEVICE_NAME
-from src.network.ping.ping import Ping
+from src.network.mqtt.homeAssistant.consts import SENSOR, DEVICE_INFO
 
 
 @dataclass
@@ -23,14 +22,7 @@ class SensorConfigDto(GenericConfigDto):
             "unique_id": self.name,
             "value_template": "{{ value_json." + self.name + "}}",
             "state_topic": SENSOR + "heatger/state",
-            "device": {
-                "identifiers": ["heatger"],
-                "manufacturer": DEVICE_MANUFACTURER,
-                "name": DEVICE_NAME,
-                "connections": [
-                    ["ip", Ping.get_ip()]
-                ]
-            }
+            "device": DEVICE_INFO
         }
         if self.device_class is not None:
             response['device_class'] = self.device_class

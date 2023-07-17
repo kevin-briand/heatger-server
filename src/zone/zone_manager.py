@@ -1,3 +1,4 @@
+"""Zone manager class"""
 import json
 import time
 from datetime import datetime
@@ -6,7 +7,8 @@ from typing import Optional
 
 from src.localStorage.config import Config
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
-from src.network.mqtt.homeAssistant.consts import SWITCH_MODE, SWITCH_STATE, BUTTON_FROSTFREE, PUBLISH_DATA_SENSOR
+from src.network.mqtt.homeAssistant.consts import SWITCH_MODE, SWITCH_STATE, \
+    BUTTON_FROSTFREE, PUBLISH_DATA_SENSOR
 from src.network.network import Network
 from src.shared.enum.orders import Orders
 from src.shared.logs.logs import Logs
@@ -17,6 +19,7 @@ from src.zone.zone import Zone
 
 
 class ZoneManager(Thread):
+    """This class is used for manage heaters zones"""
     def __init__(self):
         super().__init__()
         self.zones: list[Zone] = []
@@ -26,6 +29,7 @@ class ZoneManager(Thread):
         self.update_datas_timer = Timer()
 
     def init_zones(self):
+        """zones initializer"""
         self.zones.clear()
         i = 1
         mqtt_enabled = Config().get_config().mqtt.enabled
@@ -42,6 +46,7 @@ class ZoneManager(Thread):
             pass
 
     def init_frostfree(self):
+        """Frost-free initializer"""
         self.frostfree = Frostfree(self.zones)
 
     def run(self) -> None:
@@ -82,6 +87,7 @@ class ZoneManager(Thread):
                 self.frostfree.stop()
 
     def refresh_mqtt_datas(self):
+        """Refresh MQTT datas, send updated datas if necessary"""
         while True:
             data = {}
             for zone in self.zones:

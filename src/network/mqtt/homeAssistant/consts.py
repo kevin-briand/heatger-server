@@ -1,4 +1,6 @@
 """Const for homeassistant class"""
+from src.network.ping.ping import Ping
+
 DISCOVERY_PREFIX = 'homeassistant/'
 DEVICE_IDENTIFIER = 'heatger'
 DEVICE_MANUFACTURER = 'firedream'
@@ -24,3 +26,11 @@ WH = 'Wh'
 SWITCH_MODE = 'switch_mode'
 SWITCH_STATE = 'switch_state'
 PROG = 'prog'
+DEVICE_INFO = {
+    "identifiers": ["heatger"],
+    "manufacturer": DEVICE_MANUFACTURER,
+    "name": DEVICE_NAME,
+    "connections": [
+        ["ip", Ping.get_ip()]
+    ]
+}

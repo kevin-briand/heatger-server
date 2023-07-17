@@ -98,4 +98,6 @@ class HomeAssistant(Mqtt):
     def init_publish_electric_meter(self):
         """initialise electric meter sensor"""
         Logs.info(CLASSNAME, 'publish - electric meter sensor')
-        self.publish_config([SensorConfigDto(ELECTRIC_METER, CLASS_ENERGY, WH, TOTAL_INCREASING).to_object()])
+        self.publish_config([
+            SensorConfigDto(ELECTRIC_METER, CLASS_ENERGY, WH, TOTAL_INCREASING).to_object()
+        ])
