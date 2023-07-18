@@ -1,6 +1,7 @@
 """HomeAssistant class"""
 import time
 
+from src.I2C.consts import I2C
 from src.I2C.temperature.consts import TEMPERATURE, CELCIUS, PERCENT, HUMIDITY,\
     PRESSURE, HECTOPASCAL
 from src.electricMeter.consts import ELECTRIC_METER
@@ -13,7 +14,7 @@ from src.network.mqtt.homeAssistant.dto.button_config_dto import ButtonConfigDto
 from src.network.mqtt.homeAssistant.dto.sensor_config_dto import SensorConfigDto
 from src.network.mqtt.mqtt import Mqtt
 from src.shared.logs.logs import Logs
-from src.zone.consts import NAME, STATE, NEXT_CHANGE, MODE, IS_PING
+from src.zone.consts import NAME, STATE, NEXT_CHANGE, MODE, IS_PING, ZONE
 
 
 class HomeAssistant(Mqtt):
@@ -54,22 +55,22 @@ class HomeAssistant(Mqtt):
         conf_i2c = Config().get_config().i2c
         if conf_i2c.temperature.enabled:
             publish_conf.append(SensorConfigDto(TEMPERATURE,
-                                                CLASS_TEMPERATURE, CELCIUS).to_object())
-            publish_conf.append(SensorConfigDto(HUMIDITY, CLASS_HUMIDITY, PERCENT).to_object())
-            publish_conf.append(SensorConfigDto(PRESSURE, CLASS_PRESSURE, HECTOPASCAL).to_object())
+                                                CLASS_TEMPERATURE, I2C, CELCIUS).to_object())
+            publish_conf.append(SensorConfigDto(HUMIDITY, CLASS_HUMIDITY, I2C, PERCENT).to_object())
+            publish_conf.append(SensorConfigDto(PRESSURE, CLASS_PRESSURE, I2C, HECTOPASCAL).to_object())
         if conf_i2c.io.enabled:
-            publish_conf.append([PRESSURE, SensorConfigDto(TEMPERATURE, CELCIUS)])
+            pass
         self.publish_config(publish_conf)
 
     def init_publish_zone(self, name: str):
         """initialise zone sensors/buttons"""
         Logs.info(CLASSNAME, F'publish - sensors {name}')
         config = [
-            SensorConfigDto(F"{name}_{NAME}", CLASS_GENERIC).to_object(),
-            SensorConfigDto(F"{name}_{STATE}", CLASS_GENERIC).to_object(),
-            SensorConfigDto(F"{name}_{NEXT_CHANGE}", CLASS_GENERIC).to_object(),
-            SensorConfigDto(F"{name}_{IS_PING}", CLASS_GENERIC).to_object(),
-            SensorConfigDto(F"{name}_{MODE}", CLASS_GENERIC).to_object(),
+            SensorConfigDto(F"{name}_{NAME}", CLASS_GENERIC, state_topic_name=ZONE).to_object(),
+            SensorConfigDto(F"{name}_{STATE}", CLASS_GENERIC, state_topic_name=ZONE).to_object(),
+            SensorConfigDto(F"{name}_{NEXT_CHANGE}", CLASS_GENERIC, state_topic_name=ZONE).to_object(),
+            SensorConfigDto(F"{name}_{IS_PING}", CLASS_GENERIC, state_topic_name=ZONE).to_object(),
+            SensorConfigDto(F"{name}_{MODE}", CLASS_GENERIC, state_topic_name=ZONE).to_object(),
             ButtonConfigDto(F"{name}_{SWITCH_MODE}").to_object(),
             ButtonConfigDto(F"{name}_{SWITCH_STATE}").to_object()
         ]
@@ -79,7 +80,7 @@ class HomeAssistant(Mqtt):
         """initialise frostfree sensors"""
         Logs.info(CLASSNAME, 'publish - frostfree sensors')
         publish_config = [
-            SensorConfigDto(FROSTFREE, CLASS_GENERIC).to_object(),
+            SensorConfigDto(FROSTFREE, CLASS_GENERIC, state_topic_name=ZONE).to_object(),
             ButtonConfigDto(FROSTFREE).to_object()
         ]
         self.publish_config(publish_config)
@@ -99,5 +100,5 @@ class HomeAssistant(Mqtt):
         """initialise electric meter sensor"""
         Logs.info(CLASSNAME, 'publish - electric meter sensor')
         self.publish_config([
-            SensorConfigDto(ELECTRIC_METER, CLASS_ENERGY, WH, TOTAL_INCREASING).to_object()
+            SensorConfigDto(ELECTRIC_METER, CLASS_ENERGY, ELECTRIC_METER, WH, TOTAL_INCREASING).to_object()
         ])

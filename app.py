@@ -2,6 +2,8 @@
 import datetime
 import platform
 
+if platform.system().lower() != 'windows':
+    from src.I2C.i2c import I2C
 from src.network.api.api import Api
 from src.electricMeter.electric_meter import ElectricMeter
 from src.localStorage.config import Config
@@ -40,6 +42,8 @@ if __name__ == '__main__':
     zone_manager.start()
 
     em = ElectricMeter()
+    if platform.system().lower() != 'windows':
+        i2c = I2C().start()
 
     api = None
     if platform.system().lower() != 'windows':

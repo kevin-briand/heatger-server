@@ -9,11 +9,14 @@ from src.network.mqtt.homeAssistant.consts import SENSOR, DEVICE_INFO
 @dataclass
 class SensorConfigDto(GenericConfigDto):
     """mqtt data object for create a sensor in home assistant"""
-    def __init__(self, name: str, device_class: str, unit_of_measurement='', state_class=None):
+
+    def __init__(self, name: str, device_class: str,
+                 state_topic_name: str, unit_of_measurement='', state_class=None):
         self.name = name
         self.device_class = device_class
         self.unit_of_measurement = unit_of_measurement
         self.state_class = state_class
+        self.state_topic_name = state_topic_name
 
     def payload(self):
         """Return an object necessary to define a new sensor in home assistant"""
@@ -21,7 +24,7 @@ class SensorConfigDto(GenericConfigDto):
             "name": self.name,
             "unique_id": self.name,
             "value_template": "{{ value_json." + self.name + "}}",
-            "state_topic": SENSOR + "heatger/state",
+            "state_topic": SENSOR + f"heatger/{self.state_topic_name}/state",
             "device": DEVICE_INFO
         }
         if self.device_class is not None:

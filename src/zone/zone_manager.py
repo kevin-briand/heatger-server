@@ -8,7 +8,7 @@ from typing import Optional
 from src.localStorage.config import Config
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.network.mqtt.homeAssistant.consts import SWITCH_MODE, SWITCH_STATE, \
-    BUTTON_FROSTFREE, PUBLISH_DATA_SENSOR
+    BUTTON_FROSTFREE, PUBLISH_DATA_SENSOR, STATE_NAME
 from src.network.network import Network
 from src.shared.enum.orders import Orders
 from src.shared.logs.logs import Logs
@@ -94,6 +94,7 @@ class ZoneManager(Thread):
                 data.update(zone.get_data().to_object())
             data.update(self.frostfree.get_data().to_object())
             if data != self.current_datas:
-                self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR, json.dumps(data, cls=FileEncoder))
+                self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ZONE),
+                                               json.dumps(data, cls=FileEncoder))
                 self.current_datas = data
             time.sleep(0.5)

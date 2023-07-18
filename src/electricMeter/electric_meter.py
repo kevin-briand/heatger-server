@@ -9,6 +9,9 @@ from src.electricMeter.consts import ELECTRIC_METER, CLASSNAME
 from src.external.gpio.consts import INPUT
 from src.external.gpio.gpio import Gpio
 from src.localStorage.config import Config
+from src.localStorage.jsonEncoder.file_encoder import FileEncoder
+from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, STATE_NAME
+from src.network.network import Network
 from src.shared.logs.logs import Logs
 
 
@@ -22,7 +25,11 @@ class ElectricMeter(Thread):
         self.run_thread = True
         self.counter = 0
         self.gpio.init_pin(self.gpio_input, INPUT)
+        self.network = Network()
         if conf_em.enabled:
+            if Config().get_config().mqtt.enabled:
+                self.network.mqtt.init_publish_electric_meter()
+                Thread(target=self.refresh_mqtt_datas).start()
             self.start()
             Logs.info(CLASSNAME, "Started !")
 
@@ -45,3 +52,13 @@ class ElectricMeter(Thread):
     def get_data(self) -> [str]:
         """convert data to json"""
         return json.dumps({ELECTRIC_METER: self.counter})
+
+    def refresh_mqtt_datas(self):
+        """Refresh MQTT datas, send updated datas if necessary"""
+        data: int = -1
+        while True:
+            if data != self.counter:
+                data = self.counter
+                self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ELECTRIC_METER),
+                                               json.dumps({ELECTRIC_METER: data}, cls=FileEncoder))
+            time.sleep(0.5)
