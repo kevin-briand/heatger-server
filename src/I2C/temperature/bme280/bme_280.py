@@ -13,7 +13,7 @@ class BME280(Temperature):
 
     def __init__(self):
         super().__init__()
-        if Config().get_config().i2c.temperature:
+        if Config().get_config().i2c.temperature.enabled:
             self.bus = smbus2.SMBus(PORT)
             self.calibration_params = bme280.load_calibration_params(self.bus, ADDRESS)
 

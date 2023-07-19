@@ -5,6 +5,7 @@ from datetime import datetime
 from threading import Thread
 from typing import Optional
 
+from src.I2C.i2c import I2C
 from src.localStorage.config import Config
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.network.mqtt.homeAssistant.consts import SWITCH_MODE, SWITCH_STATE, \
@@ -58,7 +59,7 @@ class ZoneManager(Thread):
             self.network.mqtt.init_subscribe_frostfree()
             self.network.mqtt.init_publish_frostfree()
             self.network.mqtt.subcribe_on_message(self.on_mqtt_message)
-            Thread(target=self.refresh_mqtt_datas).start()
+            Thread(target=self.refresh_datas_loop).start()
 
     def on_mqtt_message(self, message):
         """processing of messages received by mqtt"""
@@ -87,14 +88,24 @@ class ZoneManager(Thread):
                 self.frostfree.stop()
 
     def refresh_mqtt_datas(self):
-        """Refresh MQTT datas, send updated datas if necessary"""
+        """Refresh MQTT datas"""
+        if Config().get_config().mqtt.enabled:
+            self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ZONE),
+                                           json.dumps(self.current_datas, cls=FileEncoder))
+
+    def refresh_datas_loop(self):
+        """test if datas changed, if true, send new datas to MQTT and I2C class"""
         while True:
             data = {}
             for zone in self.zones:
                 data.update(zone.get_data().to_object())
             data.update(self.frostfree.get_data().to_object())
             if data != self.current_datas:
-                self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ZONE),
-                                               json.dumps(data, cls=FileEncoder))
                 self.current_datas = data
+                self.refresh_mqtt_datas()
+                self.refresh_i2c_datas()
             time.sleep(0.5)
+
+    def refresh_i2c_datas(self):
+        """Refresh I2C datas"""
+        I2C.get_instance().set_zones_datas(self.current_datas)
