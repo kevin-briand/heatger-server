@@ -28,6 +28,7 @@ class ZoneManager(Thread):
         self.current_datas = {}
         self.network = Network.get_instance()
         self.update_datas_timer = Timer()
+        I2C.get_instance().toggle_order = self.toggle_order
 
     def init_zones(self):
         """zones initializer"""
@@ -87,6 +88,9 @@ class ZoneManager(Thread):
             else:
                 self.frostfree.stop()
 
+    def toggle_order(self, zone_number: int):
+        self.zones[zone_number-1].toggle_order()
+
     def refresh_mqtt_datas(self):
         """Refresh MQTT datas"""
         if Config().get_config().mqtt.enabled:
@@ -108,4 +112,4 @@ class ZoneManager(Thread):
 
     def refresh_i2c_datas(self):
         """Refresh I2C datas"""
-        I2C.get_instance().set_zones_datas(self.current_datas)
+        I2C.get_instance().set_zones_datas_and_update_screen(self.current_datas)

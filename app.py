@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
     em = ElectricMeter()
     if platform.system().lower() != 'windows':
-        i2c = I2C.get_instance().start()
+        i2c = I2C.get_instance()
 
     api = None
     if platform.system().lower() != 'windows':

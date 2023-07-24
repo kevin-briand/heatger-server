@@ -2,18 +2,21 @@
 import json
 import time
 from threading import Thread
-from typing import Optional
+from typing import Optional, Callable
 
 from src.I2C.io.enum.button import Button
 from src.I2C.io.enum.led_color import LedColor
 from src.I2C.io.pcf8574.pcf8574 import Pcf8574
+from src.I2C.screen.dto.zone_screen_dto import ZoneScreenDto
+from src.I2C.screen.enum.vue import Vue
+from src.I2C.screen.screen import Screen
 from src.I2C.temperature.bme280.bme_280 import BME280
 from src.I2C.temperature.dto.sensor_dto import SensorDto
 from src.localStorage.config import Config
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, STATE_NAME
 from src.network.network import Network
-from src.I2C.consts import I2C as I2C_CONST, CLASSNAME
+from src.I2C.consts import I2C as I2C_CONST, CLASSNAME, ZONE1, ZONE2
 from src.shared.enum.orders import Orders
 from src.shared.logs.logs import Logs
 from src.zone.consts import STATE
@@ -31,9 +34,16 @@ class I2C(Thread):
         self.temperature: Optional[SensorDto] = None
         self.zones_datas = None
         self.network = Network.get_instance()
+        self.screen_device = Screen()
+        self.screen_need_update = False
+        self.toggle_order: Optional[Callable[[int], None]] = None
+        self.loop_iterations = 0
+        self.led1_state = None
+        self.led2_state = None
         if Config().get_config().mqtt.enabled:
             self.network.mqtt.init_publish_i2c()
             Thread(target=self.refresh_mqtt_datas).start()
+        self.start()
 
     @staticmethod
     def get_instance() -> 'I2C':
@@ -42,51 +52,102 @@ class I2C(Thread):
             I2C._instance = I2C()
         return I2C._instance
 
-    def set_zones_datas(self, zones_datas):
+    def set_zones_datas_and_update_screen(self, zones_datas) -> None:
         """Set the zones datas"""
         self.zones_datas = zones_datas
+        self.screen_device.set_zone_info(ZoneScreenDto(Orders[zones_datas['zone1_state']],
+                                                       Orders[zones_datas['zone2_state']],
+                                                       zones_datas['zone1_name'],
+                                                       zones_datas['zone2_name']))
+        self.screen_need_update = True
+
+    def reset_loop_iterations(self):
+        """Used to reset the loop_iteration variable"""
+        self.loop_iterations = 0
 
     def run(self) -> None:
         config_i2c = Config().get_config().i2c
-        led1 = None
-        led2 = None
         if not config_i2c.temperature.enabled \
                 and not config_i2c.io.enabled \
                 and not config_i2c.screen.enabled:
             return
+        Logs.info(CLASSNAME, "loop started")
 
         if config_i2c.temperature.enabled:
-            self.temperature = self.temperature_sensor.get_values()
+            self.update_temperature()
 
-        iterations = 0
         while self.run_loop:
-            if config_i2c.io.enabled and self.zones_datas is not None:
-                if self.io_device.is_bp_pressed(Button.NEXT):
-                    Logs.info(CLASSNAME, "BP1 pressed !")
-                if self.io_device.is_bp_pressed(Button.OK):
-                    Logs.info(CLASSNAME, "BP2 pressed !")
-                if LedColor.order_to_color(Orders[self.zones_datas[F'zone1_{STATE}']]) != led1:
-                    led1 = LedColor.order_to_color(Orders[self.zones_datas[F'zone1_{STATE}']])
-                    self.io_device.set_color(1, led1)
-                if LedColor.order_to_color(Orders[self.zones_datas[F'zone2_{STATE}']]) != led2:
-                    led2 = LedColor.order_to_color(Orders[self.zones_datas[F'zone2_{STATE}']])
-                    self.io_device.set_color(2, led2)
-            if iterations == 60 and config_i2c.temperature.enabled:
-                self.temperature = self.temperature_sensor.get_values()
-                iterations = 0
-            iterations += 1
+            self.check_io_status()
+            if self.loop_iterations == 60 and config_i2c.temperature.enabled:
+                self.update_temperature()
+            self.update_screen_if_needed()
+            self.loop_iterations += 1
             time.sleep(0.5)
 
-    def refresh_mqtt_datas(self):
+    def update_temperature(self) -> None:
+        """get the temperature datas to the sensor"""
+        self.temperature = self.temperature_sensor.get_values()
+        self.reset_loop_iterations()
+
+    def check_io_status(self) -> None:
+        """Check io status and perform an action if changed"""
+        if not Config().get_config().i2c.io.enabled or self.zones_datas is None:
+            return
+
+        self.check_buttons_status()
+
+        zone1_led_color = LedColor.order_to_color(Orders[self.zones_datas[F'zone1_{STATE}']])
+        zone2_led_color = LedColor.order_to_color(Orders[self.zones_datas[F'zone2_{STATE}']])
+        if zone1_led_color != self.led1_state:
+            self.io_device.set_color(1, zone1_led_color)
+        if zone2_led_color != self.led2_state:
+            self.io_device.set_color(2, zone2_led_color)
+
+    def check_buttons_status(self) -> None:
+        """Check if a button is pressed. If so, perform an action."""
+        if self.io_device.is_bp_pressed(Button.NEXT):
+            self.show_next_vue()
+        if self.io_device.is_bp_pressed(Button.OK):
+            self.update_zone_state_if_needed()
+
+    def show_next_vue(self) -> None:
+        """update the screen with the next vue and reset the loop_iteration"""
+        self.screen_device.show_next_vue()
+        self.reset_loop_iterations()
+
+    def update_zone_state_if_needed(self) -> None:
+        """toggle order of the zone selected(if vue is SET_STATE_ZONE(x))"""
+        if self.screen_device.get_current_vue() == Vue.SET_STATE_ZONE1:
+            self.toggle_state_zone(ZONE1)
+        if self.screen_device.get_current_vue() == Vue.SET_STATE_ZONE2:
+            self.toggle_state_zone(ZONE2)
+
+    def toggle_state_zone(self, zone_number: int) -> None:
+        """toggle state of the zone according to zone_number"""
+        if self.toggle_order is not None:
+            self.toggle_order(zone_number)
+        self.reset_loop_iterations()
+
+    def update_screen_if_needed(self) -> None:
+        """update screen vue if screen_need_update is True"""
+        if self.screen_need_update and Config().get_config().i2c.screen.enabled:
+            self.screen_device.draw_vue_if_vars_is_not_none()
+            self.screen_need_update = False
+        if self.screen_device.get_current_vue() != Vue.GENERAL and self.loop_iterations == 59:
+            self.screen_device.show_general_vue()
+
+    def refresh_mqtt_datas(self) -> None:
         """Refresh MQTT datas, send updated datas if necessary"""
         data: Optional[SensorDto] = None
         while True:
             if self.temperature is not None and data != self.temperature:
                 data = self.temperature
+                self.screen_device.set_temperature(data)
+                self.screen_need_update = True
                 self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR.replace(STATE_NAME, I2C_CONST),
                                                json.dumps(data, cls=FileEncoder))
             time.sleep(0.5)
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop event loop"""
         self.run_loop = False
