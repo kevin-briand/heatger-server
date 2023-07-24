@@ -2,7 +2,7 @@
 Heatger is a heating manager for raspberry pi, you can use a raspberry zeroW.
 
 features include : 
- - up to 3 zones
+ - up to 2 zones
  - wait for ip found on network to return to comfort mode
  - use mqtt to communicate with home assistant
  - electric meter input to track heating consumption
@@ -79,6 +79,10 @@ This option is used to enable the I2C protocol for :
  - screen(type sh1106, OLED)
  - temperature(type bme280)
  - io(type PCF8574)
+
+**Note: you should activate I2C protocol on your RPI :**
+ - sudo raspi-config
+ - interface->I2C
 ```json
 
 {
