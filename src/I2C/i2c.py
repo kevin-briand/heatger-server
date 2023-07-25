@@ -80,7 +80,7 @@ class I2C(Thread):
                 self.update_temperature()
             self.update_screen_if_needed()
             self.loop_iterations += 1
-            time.sleep(0.5)
+            time.sleep(0.1)
 
     @staticmethod
     def is_all_i2c_devices_disabled() -> bool:

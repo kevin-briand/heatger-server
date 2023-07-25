@@ -15,10 +15,11 @@ class VueImpl(metaclass=abc.ABCMeta):
         self.img = Image.new("1", (MAX_SCREEN_X, MAX_SCREEN_Y), BACKGROUND_COLOR)
         self.draw = ImageDraw.Draw(self.img)
 
-    def render(self):
+    def render(self) -> Image:
         """draw and return an image, if failed, return an error image"""
         try:
-            return self.draw_image()
+            self.draw_image()
+            return self.img
         except OutOfRangeError:
             return self.draw_out_of_range_error()
 

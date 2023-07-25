@@ -22,4 +22,3 @@ class GeneralVue(ZoneElements, TemperatureElements, VueImpl):
         self.draw_zone_state("Z1", self.zones_info.zone1_state, PointDto(25, 50))
         self.draw_zone_state("Z2", self.zones_info.zone2_state, PointDto(75, 50))
         self.draw_menu_next()
-        return self.img
