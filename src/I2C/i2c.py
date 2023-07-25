@@ -61,18 +61,16 @@ class I2C(Thread):
                                                        zones_datas['zone2_name']))
         self.screen_need_update = True
 
-    def reset_loop_iterations(self):
+    def reset_loop_iterations(self) -> None:
         """Used to reset the loop_iteration variable"""
         self.loop_iterations = 0
 
     def run(self) -> None:
-        config_i2c = Config().get_config().i2c
-        if not config_i2c.temperature.enabled \
-                and not config_i2c.io.enabled \
-                and not config_i2c.screen.enabled:
+        if self.is_all_i2c_devices_disabled():
             return
         Logs.info(CLASSNAME, "loop started")
 
+        config_i2c = Config().get_config().i2c
         if config_i2c.temperature.enabled:
             self.update_temperature()
 
@@ -83,6 +81,15 @@ class I2C(Thread):
             self.update_screen_if_needed()
             self.loop_iterations += 1
             time.sleep(0.5)
+
+    @staticmethod
+    def is_all_i2c_devices_disabled() -> bool:
+        config_i2c = Config().get_config().i2c
+        if not config_i2c.temperature.enabled \
+                and not config_i2c.io.enabled \
+                and not config_i2c.screen.enabled:
+            return True
+        return False
 
     def update_temperature(self) -> None:
         """get the temperature datas to the sensor"""

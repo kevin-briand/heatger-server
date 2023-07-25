@@ -13,7 +13,7 @@ class Gpio:
         if platform.system().lower() != WINDOWS:
             self.client = pigpio.pi()
 
-    def set_pin(self, addr: int, status: bool):
+    def set_pin(self, addr: int, status: bool) -> None:
         """set GPIO pin on or off"""
         if platform.system().lower() == WINDOWS:
             Logs.info(CLASSNAME, F'set pin : {str(addr)} to {"on" if status else "off"}')
@@ -26,7 +26,7 @@ class Gpio:
             return 0
         return self.client.read(addr)
 
-    def init_pin(self, addr: int, mode: int):
+    def init_pin(self, addr: int, mode: int) -> None:
         """initialise GPIO pin for input or output use"""
         if platform.system().lower() == WINDOWS:
             return
