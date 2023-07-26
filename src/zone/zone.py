@@ -19,7 +19,7 @@ from src.zone.dto.info_zone import InfoZone
 
 class Zone(Base):
     """This class define a new heaters zone"""
-    def __init__(self, number: int, network=None):
+    def __init__(self, number: int):
         super().__init__()
         config = getattr(Config().get_config(), F"{ZONE}{number}")
         self.zone_id = F"{ZONE}{number}"
@@ -31,7 +31,6 @@ class Zone(Base):
         self.clock_activated = config.enabled
         self.current_horaire = None
         self.pilot = Pilot(config.gpio_eco, config.gpio_frostfree, True)
-        self.network = network
         self.ping = Ping(self.zone_id, self.on_ip_found)
         self.is_ping = False
         self.restore_state()

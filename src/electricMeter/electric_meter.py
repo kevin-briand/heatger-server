@@ -11,12 +11,14 @@ from src.external.gpio.gpio import Gpio
 from src.localStorage.config import Config
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, STATE_NAME
+from src.network.mqtt.mqtt_impl import MqttImpl
 from src.network.network import Network
 from src.shared.logs.logs import Logs
 
 
-class ElectricMeter(Thread):
+class ElectricMeter(Thread, MqttImpl):
     """Class for reading and counting a GPIO input"""
+
     def __init__(self):
         super().__init__()
         self.gpio = Gpio()
@@ -65,8 +67,11 @@ class ElectricMeter(Thread):
         """Refresh MQTT datas, send updated datas if necessary"""
         last_counter_send: int = -1
         while True:
-            if last_counter_send != self.counter:
+            if last_counter_send != self.counter or self.force_refresh_mqtt_datas:
                 last_counter_send = self.counter
-                self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ELECTRIC_METER),
-                                               json.dumps({ELECTRIC_METER: last_counter_send}, cls=FileEncoder))
+                self.refresh_mqtt_em_datas()
             time.sleep(0.5)
+
+    def refresh_mqtt_em_datas(self) -> None:
+        self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ELECTRIC_METER),
+                                json.dumps({ELECTRIC_METER: self.counter}, cls=FileEncoder))

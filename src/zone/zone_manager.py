@@ -10,6 +10,7 @@ from src.localStorage.config import Config
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.network.mqtt.homeAssistant.consts import SWITCH_MODE, SWITCH_STATE, \
     BUTTON_FROSTFREE, PUBLISH_DATA_SENSOR, STATE_NAME
+from src.network.mqtt.mqtt_impl import MqttImpl
 from src.network.network import Network
 from src.shared.enum.orders import Orders
 from src.shared.logs.logs import Logs
@@ -19,16 +20,17 @@ from src.zone.frostfree import Frostfree
 from src.zone.zone import Zone
 
 
-class ZoneManager(Thread):
+class ZoneManager(Thread, MqttImpl):
     """This class is used for manage heaters zones"""
+
     def __init__(self):
         super().__init__()
         self.zones: list[Zone] = []
         self.frostfree: Optional[Frostfree] = None
         self.current_datas = {}
-        self.network = Network.get_instance()
+        self.network = Network()
         self.update_datas_timer = Timer()
-        I2C.get_instance().toggle_order = self.toggle_order
+        I2C().toggle_order = self.toggle_order
 
     def init_zones(self):
         """zones initializer"""
@@ -37,7 +39,7 @@ class ZoneManager(Thread):
         mqtt_enabled = Config().get_config().mqtt.enabled
         try:
             while getattr(Config().get_config(), F"{ZONE}{i}") is not None:
-                self.zones.append(Zone(i, self.network))
+                self.zones.append(Zone(i))
                 if mqtt_enabled:
                     while not self.network.mqtt.is_connected():
                         continue
@@ -59,13 +61,11 @@ class ZoneManager(Thread):
         if mqtt_enabled:
             self.network.mqtt.init_subscribe_frostfree()
             self.network.mqtt.init_publish_frostfree()
-            self.network.mqtt.subcribe_on_message(self.on_mqtt_message)
             Thread(target=self.refresh_datas_loop).start()
 
     def on_mqtt_message(self, message):
         """processing of messages received by mqtt"""
-        if message.retain:
-            return
+        super().on_mqtt_message(message)
         if ZONE in message.topic:
             number_zone = Zone.get_zone_number(message.topic)
             if number_zone == -1:
@@ -89,13 +89,12 @@ class ZoneManager(Thread):
                 self.frostfree.stop()
 
     def toggle_order(self, zone_number: int):
-        self.zones[zone_number-1].toggle_order()
+        self.zones[zone_number - 1].toggle_order()
 
-    def refresh_mqtt_datas(self):
+    def refresh_mqtt_zones_datas(self):
         """Refresh MQTT datas"""
-        if Config().get_config().mqtt.enabled:
-            self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ZONE),
-                                           json.dumps(self.current_datas, cls=FileEncoder))
+        self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ZONE),
+                                json.dumps(self.current_datas, cls=FileEncoder))
 
     def refresh_datas_loop(self):
         """test if datas changed, if true, send new datas to MQTT and I2C class"""
@@ -104,12 +103,12 @@ class ZoneManager(Thread):
             for zone in self.zones:
                 data.update(zone.get_data().to_object())
             data.update(self.frostfree.get_data().to_object())
-            if data != self.current_datas:
+            if data != self.current_datas or self.force_refresh_mqtt_datas:
                 self.current_datas = data
-                self.refresh_mqtt_datas()
+                self.refresh_mqtt_zones_datas()
                 self.refresh_i2c_datas()
             time.sleep(0.5)
 
     def refresh_i2c_datas(self):
         """Refresh I2C datas"""
-        I2C.get_instance().set_zones_datas_and_update_screen(self.current_datas)
+        I2C().set_zones_datas_and_update_screen(self.current_datas)

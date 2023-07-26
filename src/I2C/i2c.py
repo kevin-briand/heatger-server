@@ -15,6 +15,7 @@ from src.I2C.temperature.dto.sensor_dto import SensorDto
 from src.localStorage.config import Config
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, STATE_NAME
+from src.network.mqtt.mqtt_impl import MqttImpl
 from src.network.network import Network
 from src.I2C.consts import I2C as I2C_CONST, CLASSNAME, ZONE1, ZONE2
 from src.shared.enum.orders import Orders
@@ -22,18 +23,23 @@ from src.shared.logs.logs import Logs
 from src.zone.consts import STATE
 
 
-class I2C(Thread):
+class I2C(Thread, MqttImpl):
     """I2C Manager class, run a event loop for update I2C devices"""
     _instance: Optional['I2C'] = None
+    _initialized = False
 
     def __init__(self):
+        if self._initialized:
+            return
+
         super().__init__()
+        MqttImpl.__init__(self)
         self.run_loop = True
         self.temperature_sensor = BME280()
         self.io_device = Pcf8574()
         self.temperature: Optional[SensorDto] = None
         self.zones_datas = None
-        self.network = Network.get_instance()
+        self.network = Network()
         self.screen_device = Screen()
         self.screen_need_update = False
         self.toggle_order: Optional[Callable[[int], None]] = None
@@ -42,15 +48,14 @@ class I2C(Thread):
         self.led2_state = None
         if Config().get_config().mqtt.enabled:
             self.network.mqtt.init_publish_i2c()
-            Thread(target=self.refresh_mqtt_datas).start()
+            Thread(target=self.refresh_mqtt_i2c_datas).start()
         self.start()
+        self._initialized = True
 
-    @staticmethod
-    def get_instance() -> 'I2C':
-        """Return an instance of this class"""
-        if not I2C._instance:
-            I2C._instance = I2C()
-        return I2C._instance
+    def __new__(cls, *args, **kwargs):
+        if not isinstance(cls._instance, cls):
+            cls._instance = super(I2C, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
 
     def set_zones_datas_and_update_screen(self, zones_datas) -> None:
         """Set the zones datas"""
@@ -143,16 +148,16 @@ class I2C(Thread):
         if self.screen_device.get_current_vue() != Vue.GENERAL and self.loop_iterations == 59:
             self.screen_device.show_general_vue()
 
-    def refresh_mqtt_datas(self) -> None:
+    def refresh_mqtt_i2c_datas(self) -> None:
         """Refresh MQTT datas, send updated datas if necessary"""
         data: Optional[SensorDto] = None
         while True:
-            if self.temperature is not None and data != self.temperature:
+            if self.temperature is not None and data != self.temperature or self.force_refresh_mqtt_datas:
                 data = self.temperature
                 self.screen_device.set_temperature(data)
                 self.screen_need_update = True
-                self.network.mqtt.publish_data(PUBLISH_DATA_SENSOR.replace(STATE_NAME, I2C_CONST),
-                                               json.dumps(data, cls=FileEncoder))
+                self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, I2C_CONST),
+                                        json.dumps(data, cls=FileEncoder))
             time.sleep(0.5)
 
     def stop(self) -> None:

@@ -2,10 +2,11 @@
 import abc
 import socket
 from threading import Thread
-from typing import List
+from typing import List, Any
 
 import paho.mqtt.client as mqtt
 
+from src.network.mqtt.consts import REFRESH
 from src.shared.logs.logs import Logs
 
 
@@ -40,6 +41,7 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
         for i in range(3):
             try:
                 self.client.connect(self.host, self.port)
+                self.on_message(None, None, REFRESH)
                 break
             except socket.timeout:
                 Logs.error(self.classname, F'Fail to connect - attempt {i + 1}/3')
@@ -62,7 +64,7 @@ class Mqtt(Thread, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     # pylint: disable=unused-argument
-    def on_message(self, client, userdata, message):
+    def on_message(self, client: Any, userdata: Any, message: Any):
         """function called when mqtt receipt a message"""
         for callback in self.on_message_subcriber:
             callback(message)

@@ -10,16 +10,19 @@ from src.shared.logs.logs import Logs
 class Network:
     """Class for initialise network(mqtt)"""
     _instance: Optional['Network'] = None
+    _initialized = False
 
     def __init__(self):
+        if Network._initialized:
+            return
+
         self.mqtt = HomeAssistant()
         if Config().get_config().mqtt.enabled:
             self.mqtt.start()
             Logs.info(CLASSNAME, "Started !")
+        Network._initialized = True
 
-    @staticmethod
-    def get_instance() -> 'Network':
-        """Return an instance of this class"""
-        if not Network._instance:
-            Network._instance = Network()
-        return Network._instance
+    def __new__(cls, *args, **kwargs):
+        if not isinstance(cls._instance, cls):
+            cls._instance = super(Network, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
