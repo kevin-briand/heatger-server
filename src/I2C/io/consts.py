@@ -1,5 +1,4 @@
 """Const for IO class"""
-ADDRESS = 0x20
 CLASSNAME = 'IO'
 PIN_LED_1_1 = 'p0'
 PIN_LED_1_2 = 'p1'

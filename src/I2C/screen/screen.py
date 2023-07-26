@@ -4,18 +4,19 @@ from typing import Optional
 from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
 
-from src.I2C.screen.consts import PORT, ADDRESS
 from src.I2C.screen.dto.zone_screen_dto import ZoneScreenDto
 from src.I2C.screen.enum.vue import Vue
 from src.I2C.screen.vues.general_vue import GeneralVue
 from src.I2C.screen.vues.set_order_vue import SetOrderVue
 from src.I2C.temperature.dto.sensor_dto import SensorDto
+from src.localStorage.config import Config
 
 
 class Screen:
     """Initialise and manage a I2C screen"""
     def __init__(self):
-        self.serial = i2c(port=PORT, address=ADDRESS)
+        device = Config().get_config().i2c.screen.device
+        self.serial = i2c(port=device.port, address=device.address)
         self.device = sh1106(self.serial)
         self.current_vue = Vue.GENERAL
         self.zone_info: Optional[ZoneScreenDto] = None

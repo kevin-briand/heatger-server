@@ -4,6 +4,7 @@ import pcf8574_io
 from src.I2C.io.consts import *
 from src.I2C.io.enum.button import Button
 from src.I2C.io.enum.led_color import LedColor
+from src.localStorage.config import Config
 from src.shared.logs.logs import Logs
 
 
@@ -12,7 +13,7 @@ class Pcf8574:
 
     def __init__(self):
         super().__init__()
-        self.bus = pcf8574_io.PCF(ADDRESS)
+        self.bus = pcf8574_io.PCF(Config().get_config().i2c.io.device.address)
         self.bus.pin_mode(PIN_LED_1_1, OUTPUT)
         self.bus.pin_mode(PIN_LED_1_2, OUTPUT)
         self.bus.pin_mode(PIN_LED_1_3, OUTPUT)

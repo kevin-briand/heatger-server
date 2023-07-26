@@ -16,13 +16,25 @@
   },
   "i2c": {
     "temperature": {
-      "enabled": false
+      "enabled": true,
+      "device": {
+        "address": "0x76",
+        "port": 1
+      }
     },
     "screen": {
-      "enabled": false
+      "enabled": true,
+      "device": {
+        "address": "0x3C",
+        "port": 1
+      }
     },
     "io": {
-      "enabled": false
+      "enabled": true,
+      "device": {
+        "address": "0x20",
+        "port": 1
+      }
     }
   },
   "entry": {

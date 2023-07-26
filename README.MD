@@ -8,8 +8,6 @@ features include :
  - electric meter input to track heating consumption
  - I2C for physical user interface(under development)
 
----
-
 ### table of contents
 - **[Install](#install)**
 - **[setting up config.json](#setting-up-configjson)**
@@ -46,7 +44,7 @@ You will need to provide your MQTT broker credentials.
   }
 }
 ```
----
+
 ### network
 This option allows you to enable network control and specify the IP address to use for the ping.
 
@@ -64,33 +62,55 @@ This option allows you to enable network control and specify the IP address to u
   }
 }
 ```
----
+
+
 ### I2C
 This option is used to enable the I2C protocol for :
  - screen(type sh1106, OLED)
  - temperature(type bme280)
  - io(type PCF8574)
 
+device parameter is to define the I2C address and port, you can see find your address with the following command :
+```bash
+# install i2ctools
+sudo apt-get install i2c-tools
+# where 1 is the port
+sudo i2cdetect -y 1
+```
+
 **Note: you should activate I2C protocol on your RPI :**
  - sudo raspi-config
  - interface->I2C
+
 ```json
 
 {
   "i2c": {
     "temperature": {
-      "enabled": false
+      "enabled": false,
+      "device": {
+        "address": "0x76",
+        "port": 1
+      }
     },
     "screen": {
-      "enabled": false
+      "enabled": false,
+      "device": {
+        "address": "0x3C",
+        "port": 1
+      }
     },
     "io": {
-      "enabled": false
+      "enabled": false,
+      "device": {
+        "address": "0x20",
+        "port": 1
+      }
     }
   }
 }
 ```
----
+
 ### input
 This option is for enabling input :
  - electric_meter :
@@ -107,7 +127,7 @@ This option is for enabling input :
   }
 }
 ```
----
+
 ### API
 Credentials to access to the API. Required to use the panel.
 ```json
@@ -118,7 +138,7 @@ Credentials to access to the API. Required to use the panel.
   }
 }
 ```
----
+
 ### zone
 This option defines the zone, you can set up a maximum of 3 zones (2 by default).
 
@@ -153,14 +173,10 @@ parameters :
 }
 ```
 
-## Frontend
+# Frontend
 
 You can get card and/or panel for home assistant [here](https://github.com/kevin-briand/heatger_frontend)
 
----
-## Hardware
+# Hardware
 
 You can get hardware [here](https://github.com/kevin-briand/heatger_hardware)
-
----
-

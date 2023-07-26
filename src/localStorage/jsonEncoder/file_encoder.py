@@ -2,6 +2,7 @@
 import datetime
 from json import JSONEncoder
 
+from src.I2C.dto.device_dto import DeviceDto
 from src.shared.enum.orders import Orders
 
 
@@ -14,4 +15,6 @@ class FileEncoder(JSONEncoder):
             return o.isoformat()
         if isinstance(o, datetime.datetime):
             return o.isoformat()
+        if isinstance(o, DeviceDto):
+            return o.to_object()
         return o.__dict__
