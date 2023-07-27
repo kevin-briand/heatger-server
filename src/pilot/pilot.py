@@ -1,6 +1,6 @@
 """Pilot class"""
 from src.external.gpio.consts import OUTPUT
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 
 from src.external.gpio.gpio import Gpio
 from src.shared.logs.logs import Logs
@@ -23,14 +23,14 @@ class Pilot:
         self.gpio.init_pin(gpio_eco_addr, OUTPUT)
         self.gpio.init_pin(gpio_frostfree_addr, OUTPUT)
 
-    def set_order(self, order: Orders):
+    def set_order(self, order: State):
         """Set order (Orders enum)"""
         Logs.info(CLASSNAME, 'set order : ' + order.name)
         self.reset_pins()
         gpio_addr = self.gpio_eco_addr
-        if order == Orders.COMFORT:
+        if order == State.COMFORT:
             return
-        if order == Orders.FROSTFREE:
+        if order == State.FROSTFREE:
             gpio_addr = self.gpio_frostfree_addr
         self.gpio.set_pin(gpio_addr, self.on)
 

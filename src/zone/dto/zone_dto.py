@@ -2,7 +2,7 @@
 import datetime
 from dataclasses import dataclass
 
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 from src.zone.dto.horaire_dto import HoraireDto
 
 
@@ -12,7 +12,7 @@ class ZoneDto:
 
     # pylint: disable=unused-argument
     def __init__(self, name: str, enabled: bool,
-                 gpio_eco: int, gpio_frostfree: int, prog: [], *args, **kwargs):
+                 gpio_eco: int, gpio_frostfree: int, prog: [], **kwargs):
         self.name = name
         self.enabled = enabled
         self.gpio_eco = gpio_eco
@@ -22,5 +22,5 @@ class ZoneDto:
             hour = int(horaire['hour'].split(':')[0])
             minute = int(horaire['hour'].split(':')[1])
             list_horaire.append(HoraireDto(horaire['day'], datetime.time(hour, minute),
-                                           Orders.to_order(int(horaire['order']))))
+                                           State.to_state(int(horaire['order']))))
         self.prog = list_horaire

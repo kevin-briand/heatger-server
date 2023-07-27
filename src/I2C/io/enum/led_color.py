@@ -2,7 +2,7 @@
 from enum import Enum
 from typing import List
 
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 
 
 class LedColor(Enum):
@@ -21,10 +21,10 @@ class LedColor(Enum):
         return LedColor.BLUE
 
     @staticmethod
-    def order_to_color(order: Orders) -> "LedColor":
+    def order_to_color(state: State) -> "LedColor":
         """return LedColor corresponding of Order given"""
-        if order == Orders.COMFORT:
+        if state == State.COMFORT:
             return LedColor.RED
-        if order == Orders.ECO:
+        if state == State.ECO:
             return LedColor.BLUE
         return LedColor.GREEN

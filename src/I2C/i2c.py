@@ -18,7 +18,7 @@ from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, STATE_NAM
 from src.network.mqtt.mqtt_impl import MqttImpl
 from src.network.network import Network
 from src.I2C.consts import I2C as I2C_CONST, CLASSNAME, ZONE1, ZONE2
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 from src.shared.logs.logs import Logs
 from src.zone.consts import STATE
 
@@ -27,6 +27,11 @@ class I2C(Thread, MqttImpl):
     """I2C Manager class, run a event loop for update I2C devices"""
     _instance: Optional['I2C'] = None
     _initialized = False
+
+    def __new__(cls, *args, **kwargs) -> 'I2C':
+        if not isinstance(cls._instance, cls):
+            cls._instance = super(I2C, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
 
     def __init__(self):
         if self._initialized:
@@ -46,29 +51,36 @@ class I2C(Thread, MqttImpl):
         self.loop_iterations = 0
         self.led1_state = None
         self.led2_state = None
-        if Config().get_config().mqtt.enabled:
-            self.network.mqtt.init_publish_i2c()
-            Thread(target=self.refresh_mqtt_i2c_datas).start()
         self.start()
+        self.init_mqtt_data_update_loop_if_enabled()
         self._initialized = True
 
-    def __new__(cls, *args, **kwargs):
-        if not isinstance(cls._instance, cls):
-            cls._instance = super(I2C, cls).__new__(cls, *args, **kwargs)
-        return cls._instance
+    def init_mqtt_data_update_loop_if_enabled(self):
+        if not Config().get_config().mqtt.enabled:
+            return
+        self.network.mqtt.init_publish_i2c()
+        Thread(target=self.refresh_mqtt_i2c_datas).start()
+
+    def refresh_mqtt_i2c_datas(self) -> None:
+        """Refresh MQTT datas, send updated datas if necessary"""
+        data: Optional[SensorDto] = None
+        while True:
+            if self.temperature is not None and data != self.temperature or self.force_refresh_mqtt_datas:
+                data = self.temperature
+                self.screen_device.set_temperature(data)
+                self.screen_need_update = True
+                self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, I2C_CONST),
+                                        json.dumps(data, cls=FileEncoder))
+            time.sleep(0.5)
 
     def set_zones_datas_and_update_screen(self, zones_datas) -> None:
         """Set the zones datas"""
         self.zones_datas = zones_datas
-        self.screen_device.set_zone_info(ZoneScreenDto(Orders[zones_datas['zone1_state']],
-                                                       Orders[zones_datas['zone2_state']],
+        self.screen_device.set_zone_info(ZoneScreenDto(State[zones_datas['zone1_state']],
+                                                       State[zones_datas['zone2_state']],
                                                        zones_datas['zone1_name'],
                                                        zones_datas['zone2_name']))
         self.screen_need_update = True
-
-    def reset_loop_iterations(self) -> None:
-        """Used to reset the loop_iteration variable"""
-        self.loop_iterations = 0
 
     def run(self) -> None:
         if self.is_all_i2c_devices_disabled():
@@ -89,6 +101,7 @@ class I2C(Thread, MqttImpl):
 
     @staticmethod
     def is_all_i2c_devices_disabled() -> bool:
+        """Return true if all i2c devices are disabled"""
         config_i2c = Config().get_config().i2c
         if not config_i2c.temperature.enabled \
                 and not config_i2c.io.enabled \
@@ -108,8 +121,8 @@ class I2C(Thread, MqttImpl):
 
         self.check_buttons_status()
 
-        zone1_led_color = LedColor.order_to_color(Orders[self.zones_datas[F'zone1_{STATE}']])
-        zone2_led_color = LedColor.order_to_color(Orders[self.zones_datas[F'zone2_{STATE}']])
+        zone1_led_color = LedColor.order_to_color(State[self.zones_datas[F'zone1_{STATE}']])
+        zone2_led_color = LedColor.order_to_color(State[self.zones_datas[F'zone2_{STATE}']])
         if zone1_led_color != self.led1_state:
             self.io_device.set_color(1, zone1_led_color)
         if zone2_led_color != self.led2_state:
@@ -117,9 +130,9 @@ class I2C(Thread, MqttImpl):
 
     def check_buttons_status(self) -> None:
         """Check if a button is pressed. If so, perform an action."""
-        if self.io_device.is_bp_pressed(Button.NEXT):
+        if self.io_device.is_button_pressed(Button.NEXT):
             self.show_next_vue()
-        if self.io_device.is_bp_pressed(Button.OK):
+        if self.io_device.is_button_pressed(Button.OK):
             self.update_zone_state_if_needed()
 
     def show_next_vue(self) -> None:
@@ -148,18 +161,10 @@ class I2C(Thread, MqttImpl):
         if self.screen_device.get_current_vue() != Vue.GENERAL and self.loop_iterations == 59:
             self.screen_device.show_general_vue()
 
-    def refresh_mqtt_i2c_datas(self) -> None:
-        """Refresh MQTT datas, send updated datas if necessary"""
-        data: Optional[SensorDto] = None
-        while True:
-            if self.temperature is not None and data != self.temperature or self.force_refresh_mqtt_datas:
-                data = self.temperature
-                self.screen_device.set_temperature(data)
-                self.screen_need_update = True
-                self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, I2C_CONST),
-                                        json.dumps(data, cls=FileEncoder))
-            time.sleep(0.5)
-
     def stop(self) -> None:
         """Stop event loop"""
         self.run_loop = False
+
+    def reset_loop_iterations(self) -> None:
+        """Used to reset the loop_iteration variable"""
+        self.loop_iterations = 0

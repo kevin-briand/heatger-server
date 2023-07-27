@@ -3,7 +3,7 @@ import datetime
 from dataclasses import dataclass
 from datetime import time
 
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 
 
 @dataclass
@@ -18,7 +18,7 @@ class HoraireDto:
 
     def is_valid_horaire(self) -> bool:
         """return True horaire is valid"""
-        return 0 <= self.day <= 6 and isinstance(self.hour, time) and isinstance(self.order, Orders)
+        return 0 <= self.day <= 6 and isinstance(self.hour, time) and isinstance(self.order, State)
 
     def to_value(self) -> int:
         """return a horaire in value, the bigger it is, the closer it is to the weekend"""
@@ -39,5 +39,5 @@ class HoraireDto:
             minute = int(horaire['hour'].split(':')[1])
             list_horaire.append(HoraireDto(int(horaire['day']),
                                            datetime.time(hour, minute),
-                                           Orders.to_order(horaire['order'])))
+                                           State.to_state(horaire['order'])))
         return list_horaire

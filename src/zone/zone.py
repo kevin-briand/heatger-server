@@ -8,7 +8,7 @@ from src.localStorage.persistence import Persistence
 from src.network.ping.ping import Ping
 from src.pilot.pilot import Pilot
 from src.shared.enum.mode import Mode
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 from src.shared.logs.logs import Logs
 from src.zone.base import Base
 from src.zone.consts import ZONE
@@ -25,9 +25,9 @@ class Zone(Base):
         self.zone_id = F"{ZONE}{number}"
         Logs.info(self.zone_id, 'Init Zone ' + str(number))
         self.name = config.name
-        self.current_order = Orders.ECO
+        self.current_order = State.ECO
         self.current_mode = Mode.AUTO
-        self.next_order = Orders.ECO
+        self.next_order = State.ECO
         self.clock_activated = config.enabled
         self.current_horaire = None
         self.pilot = Pilot(config.gpio_eco, config.gpio_frostfree, True)
@@ -52,23 +52,23 @@ class Zone(Base):
         current_horaire = self.get_current_and_next_horaire()[0]
         if current_horaire is None:
             return
-        if current_horaire.order == Orders.COMFORT:
-            self.set_order(Orders.ECO)
+        if current_horaire.order == State.COMFORT:
+            self.set_order(State.ECO)
             self.launch_ping()
         else:
-            self.set_order(Orders.ECO)
+            self.set_order(State.ECO)
 
     def on_ip_found(self):
         """Called when ip found on network(Ping class)"""
         if not self.is_ping:
             return
         self.is_ping = False
-        self.set_order(Orders.COMFORT)
+        self.set_order(State.COMFORT)
 
     def on_time_out(self):
         """Called when timeout fired"""
         Logs.info(self.zone_id, F'timeout zone {self.name}')
-        if self.next_order == Orders.COMFORT:
+        if self.next_order == State.COMFORT:
             self.launch_ping()
         else:
             self.set_order(self.next_order)
@@ -79,10 +79,10 @@ class Zone(Base):
 
     def toggle_order(self):
         """Switch state Comfort <> Eco"""
-        if self.current_order == Orders.COMFORT:
-            self.set_order(Orders.ECO)
+        if self.current_order == State.COMFORT:
+            self.set_order(State.ECO)
         else:
-            self.set_order(Orders.COMFORT)
+            self.set_order(State.COMFORT)
 
     def launch_ping(self):
         """Start discovery ip on network"""
@@ -93,12 +93,12 @@ class Zone(Base):
         self.ping = Ping(self.zone_id, self.on_ip_found)
         self.ping.start()
 
-    def set_order(self, order: Orders):
+    def set_order(self, order: State):
         """change state"""
         Logs.info(self.zone_id,
                   F'zone {self.name} switch {self.current_order.name} to {order.name}')
         self.current_order = order
-        if order != Orders.FROSTFREE:
+        if order != State.FROSTFREE:
             Persistence().set_order(self.zone_id, order)
         self.pilot.set_order(order)
 
@@ -126,7 +126,7 @@ class Zone(Base):
             self.current_horaire = None
             self.ping.stop()
             self.is_ping = False
-            self.set_order(Orders.FROSTFREE)
+            self.set_order(State.FROSTFREE)
         else:
             if self.current_mode == Mode.MANUAL:
                 self.toggle_mode()

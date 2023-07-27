@@ -73,5 +73,6 @@ class ElectricMeter(Thread, MqttImpl):
             time.sleep(0.5)
 
     def refresh_mqtt_em_datas(self) -> None:
+        """Send input data to mqtt"""
         self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ELECTRIC_METER),
                                 json.dumps({ELECTRIC_METER: self.counter}, cls=FileEncoder))

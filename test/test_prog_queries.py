@@ -12,7 +12,7 @@ from src.localStorage.config import Config
 from src.localStorage.dto.config_dto import ConfigDto
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.network.api.config.queries.prog_queries import prog_bp
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 from src.zone.dto.horaire_dto import HoraireDto
 
 config_datas = {}
@@ -35,7 +35,7 @@ class TestProgQueries(unittest.TestCase):
         fake = Faker()
         return HoraireDto(day=fake.random.randint(0, 6),
                           hour=datetime.time(fake.random.randint(0, 23), fake.random.randint(0, 59), 0),
-                          order=Orders.to_order(fake.random.randint(0, Orders.FROSTFREE.value)))
+                          order=State.to_state(fake.random.randint(0, State.FROSTFREE.value)))
 
     @staticmethod
     def mock_read_config_file():

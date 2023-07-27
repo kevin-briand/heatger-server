@@ -3,7 +3,7 @@ from datetime import datetime
 
 from src.localStorage.persistence import Persistence
 from src.network.mqtt.homeAssistant.consts import FROSTFREE
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 from src.shared.logs.logs import Logs
 from src.zone.base import Base
 from src.zone.dto.info_frostfree import InfoFrostfree
@@ -58,5 +58,5 @@ class Frostfree(Base):
         """return remaining time in json object"""
         return InfoFrostfree(self.end_date if self.end_date else None)
 
-    def set_order(self, order: Orders):
+    def set_order(self, order: State):
         """unused"""

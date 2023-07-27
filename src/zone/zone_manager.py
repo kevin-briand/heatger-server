@@ -12,7 +12,7 @@ from src.network.mqtt.homeAssistant.consts import SWITCH_MODE, SWITCH_STATE, \
     BUTTON_FROSTFREE, PUBLISH_DATA_SENSOR, STATE_NAME
 from src.network.mqtt.mqtt_impl import MqttImpl
 from src.network.network import Network
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 from src.shared.logs.logs import Logs
 from src.shared.timer.timer import Timer
 from src.zone.consts import ZONE, CLASSNAME
@@ -30,7 +30,7 @@ class ZoneManager(Thread, MqttImpl):
         self.current_datas = {}
         self.network = Network()
         self.update_datas_timer = Timer()
-        I2C().toggle_order = self.toggle_order
+        I2C().toggle_order = self.toggle_state
 
     def init_zones(self):
         """zones initializer"""
@@ -77,18 +77,19 @@ class ZoneManager(Thread, MqttImpl):
         elif BUTTON_FROSTFREE in message.topic:
             payload = message.payload.decode('utf-8')
             if payload == '':
-                Logs.error(CLASSNAME, F'{Orders.FROSTFREE} - empty data')
+                Logs.error(CLASSNAME, F'{State.FROSTFREE} - empty data')
                 return
             end_date = datetime.strptime(payload, '%Y-%m-%dT%H:%M')
             if end_date is None:
-                Logs.error(CLASSNAME, F'{Orders.FROSTFREE} - invalid date format')
+                Logs.error(CLASSNAME, F'{State.FROSTFREE} - invalid date format')
                 return
             if end_date > datetime.now():
                 self.frostfree.start(end_date)
             else:
                 self.frostfree.stop()
 
-    def toggle_order(self, zone_number: int):
+    def toggle_state(self, zone_number: int):
+        """switch heater state confort<>eco"""
         self.zones[zone_number - 1].toggle_order()
 
     def refresh_mqtt_zones_datas(self):

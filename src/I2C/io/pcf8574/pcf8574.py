@@ -24,31 +24,29 @@ class Pcf8574:
         self.bus.pin_mode(PIN_BP_2, INPUT)
         self.p6 = False
         self.p7 = False
-        Logs.info(CLASSNAME, "Init IO...")
+        Logs.info(CLASSNAME, "Init...")
 
-    def is_bp_pressed(self, bp: Button) -> bool:
+    def is_button_pressed(self, button: Button) -> bool:
         """Return True if button is pressed, False if not or if already tested and not released"""
-        state_bp = not self.bus.read(bp.value)
-        if getattr(self, bp.value) == state_bp:
+        state_button = not self.bus.read(button.value)
+        if getattr(self, button.value) == state_button:
             return False
-        if state_bp:
-            setattr(self, bp.value, True)
-            return True
-        setattr(self, bp.value, False)
-        return False
+        setattr(self, button.value, state_button)
+        return state_button
 
-    def set_color(self, led: int, color: LedColor):
+    def set_color(self, led_num: int, color: LedColor):
         """Set led color :
             - led : led number(1 or 2)
             - color : color should write
         """
-        if led == 1:
-            self.bus.write(PIN_LED_1_1, ON if color.value[0] else OFF)
-            self.bus.write(PIN_LED_1_2, ON if color.value[1] else OFF)
-            self.bus.write(PIN_LED_1_3, ON if color.value[2] else OFF)
-        elif led == 2:
-            self.bus.write(PIN_LED_2_1, ON if color.value[0] else OFF)
-            self.bus.write(PIN_LED_2_2, ON if color.value[1] else OFF)
-            self.bus.write(PIN_LED_2_3, ON if color.value[2] else OFF)
-        else:
-            Logs.error(CLASSNAME, F"unknown led number !({led})")
+        if not 0 < led_num < len(LedColor)+1:
+            Logs.error(CLASSNAME, F'led_num not in the range (min: 1, max: {len(LedColor)})')
+            return
+
+        led = LED1 if led_num == 1 else LED2
+        self.change_color(led, color)
+
+    def change_color(self, led: list[str], color: LedColor) -> None:
+        """Change the color of the given led"""
+        for i, led_pin in enumerate(led):
+            self.bus.write(led_pin, ON if color.value[i] else OFF)

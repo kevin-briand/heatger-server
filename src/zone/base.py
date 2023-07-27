@@ -2,7 +2,7 @@
 import abc
 from datetime import datetime, timedelta
 
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 from src.shared.timer.timer import Timer
 
 
@@ -18,7 +18,7 @@ class Base(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def set_order(self, order: Orders):
+    def set_order(self, order: State):
         """change order"""
         raise NotImplementedError
 

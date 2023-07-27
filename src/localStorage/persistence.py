@@ -2,7 +2,7 @@
 from src.localStorage.consts import CURRENT_ORDER, CURRENT_MODE
 from src.localStorage.local_storage import LocalStorage
 from src.shared.enum.mode import Mode
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 
 CLASSNAME = 'Persistence'
 
@@ -22,7 +22,7 @@ class Persistence(LocalStorage):
         self.persist[key] = value
         self.write(self.persist)
 
-    def set_order(self, zone_id: str, order: Orders):
+    def set_order(self, zone_id: str, order: State):
         """write order in file"""
         zone = self.persist.get(zone_id)
         if zone is None:
@@ -38,12 +38,12 @@ class Persistence(LocalStorage):
         zone[CURRENT_MODE] = mode.value
         self.set_value(zone_id, zone)
 
-    def get_order(self, zone_id: str) -> Orders:
+    def get_order(self, zone_id: str) -> State:
         """get order in file"""
         zone = self.persist.get(zone_id)
         if zone:
-            return Orders.to_order(zone.get(CURRENT_ORDER))
-        return Orders.COMFORT
+            return State.to_state(zone.get(CURRENT_ORDER))
+        return State.COMFORT
 
     def get_mode(self, zone_id: str) -> Mode:
         """get mode in file"""

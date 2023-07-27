@@ -5,7 +5,7 @@ from datetime import datetime
 
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
 from src.shared.enum.mode import Mode
-from src.shared.enum.orders import Orders
+from src.shared.enum.state import State
 from src.zone.consts import NAME, STATE, NEXT_CHANGE, MODE, IS_PING
 
 
@@ -14,7 +14,7 @@ class InfoZone:
     """infoZone data object"""
     id: str
     name: str
-    state: Orders
+    state: State
     next_change: datetime
     is_ping: bool
     mode: Mode
