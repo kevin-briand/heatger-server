@@ -42,6 +42,7 @@ class ElectricMeter(Thread, MqttImpl):
         if Config().get_config().mqtt.enabled:
             self.network.mqtt.init_publish_electric_meter()
             Thread(target=self.refresh_mqtt_datas_loop).start()
+            self.subcribe_to_mqtt_on_message()
 
     def run(self) -> None:
         while self.run_thread:

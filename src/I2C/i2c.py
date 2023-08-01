@@ -60,6 +60,7 @@ class I2C(Thread, MqttImpl):
             return
         self.network.mqtt.init_publish_i2c()
         Thread(target=self.refresh_mqtt_i2c_datas).start()
+        self.subcribe_to_mqtt_on_message()
 
     def refresh_mqtt_i2c_datas(self) -> None:
         """Refresh MQTT datas, send updated datas if necessary"""

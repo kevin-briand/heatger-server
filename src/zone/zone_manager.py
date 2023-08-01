@@ -62,6 +62,7 @@ class ZoneManager(Thread, MqttImpl):
             self.network.mqtt.init_subscribe_frostfree()
             self.network.mqtt.init_publish_frostfree()
             Thread(target=self.refresh_datas_loop).start()
+            self.subcribe_to_mqtt_on_message()
 
     def on_mqtt_message(self, message):
         """processing of messages received by mqtt"""
