@@ -1,17 +1,30 @@
 """Config class"""
+from typing import Optional
+
 from src.localStorage.dto.config_dto import ConfigDto
 from src.localStorage.local_storage import LocalStorage
 from src.network.dto.ip_dto import IpDto
 from src.shared.logs.logs import Logs
-from src.zone.dto.horaire_dto import HoraireDto
+from src.zone.dto.schedule_dto import ScheduleDto
 
 CLASSNAME = 'Config'
 
 
 class Config(LocalStorage):
     """Class for reading/writing the configuration in file"""
+    _initialized = False
+    _instance: Optional['Config'] = None
+
+    def __new__(cls, *args, **kwargs) -> 'Config':
+        if not isinstance(cls._instance, cls):
+            cls._instance = super(Config, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
     def __init__(self):
+        if Config._initialized:
+            return
         super().__init__('config.json')
+        Config._initialized = True
 
     def get_config(self) -> ConfigDto:
         """return a ConfigDto object"""
@@ -29,6 +42,7 @@ class Config(LocalStorage):
 
     def save_data(self, config) -> None:
         """write a ConfigDto object to file"""
+        print('write')
         self.write(config)
 
     def add_ip(self, ip: IpDto) -> bool:
@@ -60,18 +74,18 @@ class Config(LocalStorage):
         config = self.get_config()
         network_config = config.network
         ips_list = network_config.ip
-        ip_with_horaire_removed = []
+        ip_with_schedule_removed = []
         for ip_in_config in ips_list:
             if ip_in_config.ip != ip.ip:
-                ip_with_horaire_removed.append(ip_in_config)
-        network_config.ip = ip_with_horaire_removed
+                ip_with_schedule_removed.append(ip_in_config)
+        network_config.ip = ip_with_schedule_removed
         self.save_data(config)
         return True
 
-    def add_horaire(self, zone_id: str, horaire: HoraireDto) -> bool:
-        """adding horaire to prog list"""
-        if not horaire.is_valid_horaire():
-            Logs.error(CLASSNAME, 'Horaire is not valid !')
+    def add_schedule(self, zone_id: str, schedule: ScheduleDto) -> bool:
+        """adding schedule to prog list"""
+        if not schedule.is_valid_schedule():
+            Logs.error(CLASSNAME, 'schedule is not valid !')
             return False
         config = self.get_config()
         zone = getattr(config, zone_id)
@@ -81,32 +95,32 @@ class Config(LocalStorage):
         prog = zone.prog
 
         for hor in prog:
-            if horaire.to_value() == hor.to_value():
+            if schedule.to_value() == hor.to_value():
                 Logs.error(CLASSNAME, 'prog already exist !')
                 return False
-        prog.append(horaire)
-        prog.sort(key=Config.sort_horaire)
+        prog.append(schedule)
+        prog.sort(key=Config.sort_schedule)
         self.save_data(config)
         return True
 
-    def add_horaires(self, zone_id: str, horaires: [HoraireDto]) -> None:
-        """adding horaire list to prog list"""
+    def add_schedules(self, zone_id: str, schedules: [ScheduleDto]) -> None:
+        """adding schedules list to prog list"""
         zone = getattr(self.get_config(), zone_id)
         if zone is None:
             Logs.error(CLASSNAME, 'Zone not found !')
             return
-        for horaire in horaires:
-            self.add_horaire(zone_id, horaire)
+        for schedule in schedules:
+            self.add_schedule(zone_id, schedule)
 
     @staticmethod
-    def sort_horaire(horaire: HoraireDto) -> int:
-        """return horaire to a value"""
-        return HoraireDto(horaire.day, horaire.hour, horaire.order).to_value()
+    def sort_schedule(schedule: ScheduleDto) -> int:
+        """return schedule to a value"""
+        return ScheduleDto(schedule.day, schedule.hour, schedule.state).to_value()
 
-    def remove_horaire(self, zone_id: str, horaire: HoraireDto) -> bool:
-        """removing horaire to prog list"""
-        if not horaire.is_valid_horaire():
-            Logs.error(CLASSNAME, 'Horaire is not valid !')
+    def remove_schedule(self, zone_id: str, schedule: ScheduleDto) -> bool:
+        """removing schedule to prog list"""
+        if not schedule.is_valid_schedule():
+            Logs.error(CLASSNAME, 'Schedule is not valid !')
             return False
         config = self.get_config()
         zone = getattr(config, zone_id)
@@ -114,16 +128,16 @@ class Config(LocalStorage):
             Logs.error(CLASSNAME, 'Zone not found !')
             return False
         prog = zone.prog
-        prog_with_horaire_removed = []
+        prog_with_schedule_removed = []
         for hor in prog:
-            if hor.to_value() != horaire.to_value():
-                prog_with_horaire_removed.append(hor)
-        zone.prog = prog_with_horaire_removed
+            if hor.to_value() != schedule.to_value():
+                prog_with_schedule_removed.append(hor)
+        zone.prog = prog_with_schedule_removed
         self.save_data(config)
         return True
 
-    def remove_all_horaire(self, zone_id: str) -> bool:
-        """removing all horaire to prog list"""
+    def remove_all_schedule(self, zone_id: str) -> bool:
+        """removing all schedule to prog list"""
         config = self.get_config()
         zone = getattr(config, zone_id)
         if zone is None:

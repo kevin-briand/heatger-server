@@ -23,7 +23,7 @@ class Pilot:
         self.gpio.init_pin(gpio_eco_addr, OUTPUT)
         self.gpio.init_pin(gpio_frostfree_addr, OUTPUT)
 
-    def set_order(self, order: State):
+    def set_state(self, order: State):
         """Set order (Orders enum)"""
         Logs.info(CLASSNAME, 'set order : ' + order.name)
         self.reset_pins()

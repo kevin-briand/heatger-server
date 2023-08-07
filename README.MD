@@ -6,7 +6,7 @@ features include :
  - wait for ip found on network to return to comfort mode
  - use mqtt to communicate with home assistant
  - electric meter input to track heating consumption
- - I2C for physical user interface(under development)
+ - I2C for physical user interface
 
 ### table of contents
 - **[Install](#install)**
@@ -164,12 +164,12 @@ parameters :
  Prog object :
  - day: day of the week between 0(monday) and 6(sunday)
  - hour: hour of the day
- - order: send order(0=comfort, 1=eco)
+ - state: send state(0=comfort, 1=eco)
 ```json
 {
   "day": 3,
   "hour": "12:48:00",
-  "order": 1
+  "state": 1
 }
 ```
 

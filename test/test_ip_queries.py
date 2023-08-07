@@ -16,7 +16,7 @@ from src.network.dto.ip_dto import IpDto
 config_datas = {}
 
 
-class TestProgQueries(unittest.TestCase):
+class TestIpQueries(unittest.TestCase):
 
     def setUp(self):
         self.app = Flask(__name__)
@@ -38,81 +38,59 @@ class TestProgQueries(unittest.TestCase):
         return IpDto(name=fake.name(), ip=ip)
 
     @staticmethod
-    def mock_read_config_file():
-        return config_datas
-
-    def mock_write_config_file(self, data):
-        global config_datas
-        config_datas = json.dumps(data, cls=FileEncoder)
-
-    @staticmethod
     def mock_open_file():
         mock_open_obj = mock_open()
         mock_file_handle = mock_open_obj.return_value
         mock_file_handle.read.return_value = config_datas
         return mock_open_obj
 
-    @staticmethod
-    def update_read_file(mock_open_file):
-        mock_open_file.return_value.read.return_value = config_datas
+    def write_ip_in_config(self, ip: list[IpDto]):
+        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
+            with patch('os.remove'):
+                config = Config().get_config()
+                config.network.ip = ip
+                Config().write(config)
 
     def test_get_ip(self):
         ip = self.ip_fixture()
-        with patch('src.network.api.config.queries.ip_queries.Config') as mock_config:
-            mock_config_instance = mock_config.return_value
-            mock_config_instance.get_config.return_value.network.ip = [ip]
-            response = self.client.get('/ip')
+        self.write_ip_in_config([ip])
+
+        response = self.client.get('/ip')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(IpDto.array_to_ip_dto(json.loads(response.data)), [ip])
 
     def test_post_ip(self):
         ip = self.ip_fixture()
+        self.write_ip_in_config([])
 
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()) as mock_open_file:
-            with patch('src.localStorage.local_storage.LocalStorage.write', self.mock_write_config_file):
-                request_json = json.dumps(ip, cls=FileEncoder)
+        request_json = json.dumps(ip, cls=FileEncoder)
 
-                response = self.client.post('/ip', data=request_json, mimetype='application/json')
+        response = self.client.post('/ip', data=request_json, mimetype='application/json')
 
-                self.assertEqual(response.status_code, 200)
-
-                self.update_read_file(mock_open_file)
-                config = Config().get_config()
-                self.assertEqual(config.network.ip, [ip])
+        self.assertEqual(response.status_code, 200)
+        config = Config().get_config()
+        self.assertEqual(config.network.ip, [ip])
 
     def test_delete_ip(self):
         ip = self.ip_fixture()
+        self.write_ip_in_config([ip])
 
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()) as mock_open_file:
-            with patch('src.localStorage.local_storage.LocalStorage.write', self.mock_write_config_file):
-                config = Config().get_config()
-                config.network.ip = [ip]
-                self.mock_write_config_file(config)
-                self.update_read_file(mock_open_file)
+        response = self.client.delete(f'/ip/{ip.ip}')
 
-                response = self.client.delete(f'/ip/{ip.ip}')
-                self.assertEqual(response.status_code, 200)
-
-                self.update_read_file(mock_open_file)
-                config = Config().get_config()
-                self.assertEqual(config.zone1.prog, [])
+        self.assertEqual(response.status_code, 200)
+        config = Config().get_config()
+        self.assertEqual(config.network.ip, [])
 
     def test_delete_ip_not_found(self):
         ip = self.ip_fixture()
+        self.write_ip_in_config([ip])
 
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()) as mock_open_file:
-            config = Config().get_config()
-            config.network.ip = [ip]
-            self.mock_write_config_file(config)
-            self.update_read_file(mock_open_file)
+        response = self.client.delete(f'/ip/{self.ip_fixture().ip}')
+        self.assertEqual(response.status_code, 404)
 
-            response = self.client.delete(f'/ip/{self.ip_fixture().ip}')
-            self.assertEqual(response.status_code, 404)
-
-            self.update_read_file(mock_open_file)
-            config = Config().get_config()
-            self.assertEqual(config.network.ip, [ip])
+        config = Config().get_config()
+        self.assertEqual(config.network.ip, [ip])
 
 
 if __name__ == '__main__':

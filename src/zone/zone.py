@@ -3,6 +3,8 @@ import re
 import time
 
 from datetime import datetime
+from typing import Optional
+
 from src.localStorage.config import Config
 from src.localStorage.persistence import Persistence
 from src.network.ping.ping import Ping
@@ -13,78 +15,111 @@ from src.shared.logs.logs import Logs
 from src.zone.base import Base
 from src.zone.consts import ZONE
 
-from src.zone.dto.horaire_dto import HoraireDto
+from src.zone.dto.schedule_dto import ScheduleDto
 from src.zone.dto.info_zone import InfoZone
 
 
 class Zone(Base):
     """This class define a new heaters zone"""
+
     def __init__(self, number: int):
         super().__init__()
         config = getattr(Config().get_config(), F"{ZONE}{number}")
         self.zone_id = F"{ZONE}{number}"
         Logs.info(self.zone_id, 'Init Zone ' + str(number))
         self.name = config.name
-        self.current_order = State.ECO
+        self.current_state = State.ECO
         self.current_mode = Mode.AUTO
-        self.next_order = State.ECO
-        self.clock_activated = config.enabled
-        self.current_horaire = None
+        self.next_state = State.ECO
+        self.current_schedule = None
         self.pilot = Pilot(config.gpio_eco, config.gpio_frostfree, True)
         self.ping = Ping(self.zone_id, self.on_ip_found)
         self.is_ping = False
         self.restore_state()
         Logs.info(self.zone_id, 'Started !')
 
-    def restore_state(self):
+    def restore_state(self) -> None:
         """Restore state/mode after a device reboot"""
-        persist = Persistence().get_value(self.zone_id)
-        if not persist:
-            Persistence().set_order(self.zone_id, self.current_order)
-            Persistence().set_mode(self.zone_id, self.current_mode)
-            return
-        self.current_order = Persistence().get_order(self.zone_id)
+        self.current_state = Persistence().get_state(self.zone_id)
         mode = Persistence().get_mode(self.zone_id)
         if self.current_mode != mode:
             self.toggle_mode()
         else:
-            self.start_next_order()
-        current_horaire = self.get_current_and_next_horaire()[0]
-        if current_horaire is None:
-            return
-        if current_horaire.order == State.COMFORT:
-            self.set_order(State.ECO)
-            self.launch_ping()
-        else:
-            self.set_order(State.ECO)
+            self.start_next_state()
 
-    def on_ip_found(self):
-        """Called when ip found on network(Ping class)"""
-        if not self.is_ping:
+        current_schedule = self.get_current_and_next_schedule()[0]
+        if current_schedule is None:
             return
-        self.is_ping = False
-        self.set_order(State.COMFORT)
 
-    def on_time_out(self):
-        """Called when timeout fired"""
-        Logs.info(self.zone_id, F'timeout zone {self.name}')
-        if self.next_order == State.COMFORT:
+        self.set_state(State.ECO)
+        if current_schedule.state == State.COMFORT:
             self.launch_ping()
-        else:
-            self.set_order(self.next_order)
-            self.ping.stop()
+
+    def toggle_mode(self) -> None:
+        """Switch mode Auto <> Manual"""
+        if self.current_mode == Mode.AUTO:
+            self.current_mode = Mode.MANUAL
+            self.current_schedule = None
+            self.timer.stop()
             self.is_ping = False
-        time.sleep(1)
-        self.start_next_order()
-
-    def toggle_order(self):
-        """Switch state Comfort <> Eco"""
-        if self.current_order == State.COMFORT:
-            self.set_order(State.ECO)
         else:
-            self.set_order(State.COMFORT)
+            self.current_mode = Mode.AUTO
+        Persistence().set_mode(self.zone_id, self.current_mode)
+        Logs.info(self.zone_id, "Mode set to " + self.current_mode.name)
+        if self.current_mode == Mode.AUTO:
+            self.restore_state()
 
-    def launch_ping(self):
+    def start_next_state(self) -> None:
+        """Launch next timer (mode Auto)"""
+        if self.current_mode != Mode.AUTO:
+            return
+
+        current_schedule, next_schedule = self.get_current_and_next_schedule()
+        if current_schedule is None or next_schedule is None:
+            return
+
+        remaining_time = self.get_remaining_time_from_schedule(next_schedule)
+
+        self.current_schedule = current_schedule
+        self.next_state = next_schedule.state
+        self.timer.start(remaining_time, self.on_time_out)
+        Logs.info(self.zone_id, F'next timeout in {str(remaining_time)}s')
+
+    def get_current_and_next_schedule(self) -> list[Optional[ScheduleDto], Optional[ScheduleDto]]:
+        """get the current and next schedule in prog list"""
+        zone_config = getattr(Config().get_config(), self.zone_id)
+        list_schedules = zone_config.prog
+        if list_schedules is None or len(list_schedules) == 0:
+            Logs.error(self.zone_id, "schedule list is empty")
+            return [None, None]
+
+        current_schedule: Optional[ScheduleDto] = None
+        next_schedule: Optional[ScheduleDto] = None
+        now = datetime.now()
+
+        for schedule in list_schedules:
+            schedule_date = Zone.get_next_day(schedule.day, schedule.hour)
+            if schedule_date > now and schedule is not self.current_schedule:
+                if next_schedule is None or schedule_date < Zone.get_next_day(next_schedule.day, next_schedule.hour):
+                    next_schedule = schedule
+            if schedule_date <= now and (current_schedule is None or
+                                         schedule_date > Zone.get_next_day(current_schedule.day,
+                                                                           current_schedule.hour) < schedule_date):
+                current_schedule = schedule
+
+        if current_schedule is None:
+            current_schedule = list_schedules[len(list_schedules) - 1]
+        if next_schedule is None:
+            next_schedule = list_schedules[0]
+        return [current_schedule, next_schedule]
+
+    @staticmethod
+    def get_remaining_time_from_schedule(schedule: ScheduleDto) -> int:
+        """Return the remaining time between the next schedule and now"""
+        schedule_date = Zone.get_next_day(schedule.day, schedule.hour)
+        return int(schedule_date.timestamp() - datetime.now().timestamp())
+
+    def launch_ping(self) -> None:
         """Start discovery ip on network"""
         self.is_ping = True
         if self.ping.is_running():
@@ -93,91 +128,52 @@ class Zone(Base):
         self.ping = Ping(self.zone_id, self.on_ip_found)
         self.ping.start()
 
-    def set_order(self, order: State):
+    def set_state(self, state: State) -> None:
         """change state"""
-        Logs.info(self.zone_id,
-                  F'zone {self.name} switch {self.current_order.name} to {order.name}')
-        self.current_order = order
-        if order != State.FROSTFREE:
-            Persistence().set_order(self.zone_id, order)
-        self.pilot.set_order(order)
+        Logs.info(self.zone_id, F'zone {self.name} switch {self.current_state.name} to {state.name}')
+        self.current_state = state
+        if state != State.FROSTFREE:
+            Persistence().set_state(self.zone_id, state)
+        self.pilot.set_state(state)
 
-    def toggle_mode(self):
-        """Switch mode Auto <> Manual"""
-        if self.current_mode == Mode.AUTO:
-            self.current_mode = Mode.MANUAL
-            self.clock_activated = False
-            self.current_horaire = None
-            self.timer.stop()
-            self.is_ping = False
+    def on_ip_found(self) -> None:
+        """Called when ip found on network(Ping class)"""
+        if not self.is_ping:
+            return
+        self.is_ping = False
+        self.set_state(State.COMFORT)
+
+    def on_time_out(self) -> None:
+        """Called when timeout fired"""
+        Logs.info(self.zone_id, F'timeout zone {self.name}')
+        if self.next_state == State.COMFORT:
+            self.launch_ping()
         else:
-            self.current_mode = Mode.AUTO
-            self.clock_activated = True
-        Persistence().set_mode(self.zone_id, self.current_mode)
-        Logs.info(self.zone_id, "Mode set to " + self.current_mode.name)
-        if self.clock_activated:
-            self.restore_state()
+            self.set_state(self.next_state)
+            self.ping.stop()
+            self.is_ping = False
+        time.sleep(1)  # wait 1sec before start next timer to avoid a loop
+        self.start_next_state()
 
-    def set_frostfree(self, activate: bool):
+    def toggle_state(self) -> None:
+        """Switch state Comfort <> Eco"""
+        if self.current_state == State.COMFORT:
+            self.set_state(State.ECO)
+        else:
+            self.set_state(State.COMFORT)
+
+    def set_frostfree(self, activate: bool) -> None:
         """Activate/deactivate frost-free"""
         if activate:
             if self.current_mode == Mode.AUTO:
                 self.toggle_mode()
-            self.current_horaire = None
+            self.current_schedule = None
             self.ping.stop()
             self.is_ping = False
-            self.set_order(State.FROSTFREE)
+            self.set_state(State.FROSTFREE)
         else:
             if self.current_mode == Mode.MANUAL:
                 self.toggle_mode()
-
-    def start_next_order(self):
-        """Launch next timer (mode Auto)"""
-        if not self.clock_activated or self.current_mode != Mode.AUTO:
-            return
-
-        current_horaire, next_horaire = self.get_current_and_next_horaire()
-        if current_horaire is None or next_horaire is None:
-            return
-
-        horaire_date: datetime
-        now = datetime.now()
-
-        horaire_date = Zone.get_next_day(next_horaire.day, next_horaire.hour)
-        remaining_time = int(horaire_date.timestamp() - now.timestamp())
-
-        self.current_horaire = current_horaire
-        self.next_order = next_horaire.order
-        self.timer.start(remaining_time, self.on_time_out)
-        Logs.info(self.zone_id, F'next timeout in {str(remaining_time)}s')
-
-    def get_current_and_next_horaire(self) -> [HoraireDto, HoraireDto]:
-        """get the current and next horaire in prog list"""
-        config = getattr(Config().get_config(), self.zone_id)
-        list_horaires = config.prog
-        if list_horaires is None or len(list_horaires) == 0:
-            Logs.error(self.zone_id, "horaire list is empty")
-            return [None, None]
-        current_horaire: HoraireDto or None = None
-        next_horaire: HoraireDto or None = None
-        horaire_date: datetime
-        now = datetime.now()
-
-        for horaire in list_horaires:
-            horaire_date = Zone.get_next_day(horaire.day, horaire.hour)
-            if horaire_date > now and horaire is not self.current_horaire:
-                if next_horaire is None or horaire_date < Zone.get_next_day(next_horaire.day, next_horaire.hour):
-                    next_horaire = horaire
-            if horaire_date <= now and (
-                    current_horaire is None or
-                    horaire_date > Zone.get_next_day(current_horaire.day, current_horaire.hour) < horaire_date):
-                current_horaire = horaire
-
-        if current_horaire is None:
-            current_horaire = list_horaires[len(list_horaires) - 1]
-        if next_horaire is None:
-            next_horaire = list_horaires[0]
-        return [current_horaire, next_horaire]
 
     def get_data(self) -> InfoZone:
         """return information zone in json object"""
@@ -187,7 +183,7 @@ class Zone(Base):
 
         return InfoZone(self.zone_id,
                         self.name,
-                        self.current_order,
+                        self.current_state,
                         next_change,
                         self.is_ping,
                         self.current_mode)
@@ -198,4 +194,4 @@ class Zone(Base):
         zone_number = re.search(r"\d", topic)
         if zone_number is None:
             return -1
-        return int(zone_number.group(0))-1
+        return int(zone_number.group(0))

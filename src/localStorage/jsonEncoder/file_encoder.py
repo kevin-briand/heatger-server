@@ -3,6 +3,7 @@ import datetime
 from json import JSONEncoder
 
 from src.I2C.dto.device_dto import DeviceDto
+from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
 
 
@@ -10,6 +11,8 @@ class FileEncoder(JSONEncoder):
     """Serialize objects"""
     def default(self, o):
         if isinstance(o, State):
+            return o.value
+        if isinstance(o, Mode):
             return o.value
         if isinstance(o, datetime.time):
             return o.isoformat()

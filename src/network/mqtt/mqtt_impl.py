@@ -24,6 +24,7 @@ class MqttImpl(metaclass=ABCMeta):
             return
 
     def subcribe_to_mqtt_on_message(self):
+        """Subscribe a callback to the mqtt on_message"""
         self.network.mqtt.subcribe_on_message(self.on_mqtt_message)
 
     def refresh_mqtt_datas(self, topic: str, datas: str):

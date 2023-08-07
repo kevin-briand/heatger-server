@@ -2,7 +2,6 @@
 from werkzeug.wrappers import Request, Response
 
 from src.localStorage.persistence import Persistence
-from src.network.api.consts import API_TOKEN
 
 
 class Middleware:
@@ -28,6 +27,6 @@ class Middleware:
             return True
         if not auth:
             return False
-        if auth != Persistence().get_value(API_TOKEN):
+        if auth != Persistence().get_api_token():
             return False
         return True

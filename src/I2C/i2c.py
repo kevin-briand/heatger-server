@@ -56,6 +56,7 @@ class I2C(Thread, MqttImpl):
         self._initialized = True
 
     def init_mqtt_data_update_loop_if_enabled(self):
+        """Initialise the loop for updating mqtt sensors"""
         if not Config().get_config().mqtt.enabled:
             return
         self.network.mqtt.init_publish_i2c()

@@ -6,7 +6,7 @@ from flask import abort, Blueprint, request
 
 from src.localStorage.config import Config
 from src.localStorage.jsonEncoder.file_encoder import FileEncoder
-from src.zone.dto.horaire_dto import HoraireDto
+from src.zone.dto.schedule_dto import ScheduleDto
 
 prog_bp = Blueprint('prog', __name__)
 
@@ -25,7 +25,7 @@ def post_prog(zone=None):
     """add a list of prog in the zone, return an array of prog corresponding of zone"""
     if request.json is not None:
         try:
-            Config().add_horaires(zone, HoraireDto.array_to_horaire(request.json))
+            Config().add_schedules(zone, ScheduleDto.from_array(request.json))
             return json.dumps(getattr(Config().get_config(), zone).prog, cls=FileEncoder)
         except AttributeError:
             abort(404)
@@ -37,14 +37,14 @@ def delete_prog(zone, value: str):
     """remove prog of zone, return an array of prog corresponding of zone"""
     try:
         prog = getattr(Config().get_config(), zone).prog
-        result_horaire: Optional[HoraireDto] = None
+        result_schedule: Optional[ScheduleDto] = None
         for horaire in prog:
             if horaire.to_value() == int(value):
-                result_horaire = horaire
+                result_schedule = horaire
                 break
-        if result_horaire is None:
+        if result_schedule is None:
             abort(404)
-        Config().remove_horaire(zone, result_horaire)
+        Config().remove_schedule(zone, result_schedule)
         return json.dumps(getattr(Config().get_config(), zone).prog, cls=FileEncoder)
     except AttributeError:
         abort(404)
@@ -54,7 +54,7 @@ def delete_prog(zone, value: str):
 def delete_all_prog(zone):
     """remove all prog of zone, return an array of prog corresponding of zone"""
     try:
-        Config().remove_all_horaire(zone)
+        Config().remove_all_schedule(zone)
         return json.dumps(getattr(Config().get_config(), zone).prog, cls=FileEncoder)
     except AttributeError:
         abort(404)

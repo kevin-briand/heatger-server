@@ -51,6 +51,7 @@ class HomeAssistant(Mqtt):
 
     def init_publish_i2c(self):
         """initialise i2c sensors"""
+        self.wait_for_connect()
         publish_conf = []
         conf_i2c = Config().get_config().i2c
         if conf_i2c.temperature.enabled:
@@ -64,6 +65,7 @@ class HomeAssistant(Mqtt):
 
     def init_publish_zone(self, name: str):
         """initialise zone sensors/buttons"""
+        self.wait_for_connect()
         Logs.info(CLASSNAME, F'publish - sensors {name}')
         config = [
             SensorConfigDto(F"{name}_{NAME}", CLASS_GENERIC, state_topic_name=ZONE).to_object(),
@@ -78,6 +80,7 @@ class HomeAssistant(Mqtt):
 
     def init_publish_frostfree(self):
         """initialise frostfree sensors"""
+        self.wait_for_connect()
         Logs.info(CLASSNAME, 'publish - frostfree sensors')
         publish_config = [
             SensorConfigDto(FROSTFREE, CLASS_GENERIC, state_topic_name=ZONE).to_object(),
@@ -87,18 +90,26 @@ class HomeAssistant(Mqtt):
 
     def init_subscribe_frostfree(self):
         """initialise frostfree button"""
+        self.wait_for_connect()
         Logs.info(CLASSNAME, 'subscribe - frostfree button')
         self.client.subscribe(BUTTON + BUTTON_FROSTFREE + '/commands')
 
     def init_subscribe_zone(self, name: str):
         """initialise zone buttons"""
+        self.wait_for_connect()
         Logs.info(CLASSNAME, F'subscribe - buttons {name}')
         self.client.subscribe(BUTTON + F'{name}_' + SWITCH_MODE + '/commands')
         self.client.subscribe(BUTTON + F'{name}_' + SWITCH_STATE + '/commands')
 
     def init_publish_electric_meter(self):
         """initialise electric meter sensor"""
+        self.wait_for_connect()
         Logs.info(CLASSNAME, 'publish - electric meter sensor')
         self.publish_config([
             SensorConfigDto(ELECTRIC_METER, CLASS_ENERGY, ELECTRIC_METER, WH, TOTAL_INCREASING).to_object()
         ])
+
+    def wait_for_connect(self):
+        """Wait loop, end when mqtt client is connected"""
+        while not self.is_connected():
+            time.sleep(0.1)

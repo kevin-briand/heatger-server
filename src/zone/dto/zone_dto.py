@@ -3,7 +3,7 @@ import datetime
 from dataclasses import dataclass
 
 from src.shared.enum.state import State
-from src.zone.dto.horaire_dto import HoraireDto
+from src.zone.dto.schedule_dto import ScheduleDto
 
 
 @dataclass
@@ -21,6 +21,6 @@ class ZoneDto:
         for horaire in prog:
             hour = int(horaire['hour'].split(':')[0])
             minute = int(horaire['hour'].split(':')[1])
-            list_horaire.append(HoraireDto(horaire['day'], datetime.time(hour, minute),
-                                           State.to_state(int(horaire['order']))))
+            list_horaire.append(ScheduleDto(horaire['day'], datetime.time(hour, minute),
+                                            State.to_state(int(horaire['state']))))
         self.prog = list_horaire
