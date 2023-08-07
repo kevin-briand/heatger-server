@@ -55,7 +55,8 @@ class TestProgQueries(unittest.TestCase):
         schedule = self.schedule_fixture()
         self.write_prog_in_config([schedule])
 
-        response = self.client.get('/prog/zone1')
+        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
+            response = self.client.get('/prog/zone1')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), [schedule])
@@ -71,7 +72,9 @@ class TestProgQueries(unittest.TestCase):
         self.write_prog_in_config([])
 
         request_json = json.dumps([schedule], cls=FileEncoder)
-        response = self.client.post('/prog/zone1', data=request_json, mimetype='application/json')
+        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
+            with patch('os.remove'):
+                response = self.client.post('/prog/zone1', data=request_json, mimetype='application/json')
 
         self.assertEqual(response.status_code, 200)
 
@@ -88,7 +91,9 @@ class TestProgQueries(unittest.TestCase):
         schedule = self.schedule_fixture()
         self.write_prog_in_config([schedule])
 
-        response = self.client.delete(f'/prog/zone1/{schedule.to_value()}')
+        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
+            with patch('os.remove'):
+                response = self.client.delete(f'/prog/zone1/{schedule.to_value()}')
         self.assertEqual(response.status_code, 200)
 
         config = Config().get_config()
@@ -107,7 +112,9 @@ class TestProgQueries(unittest.TestCase):
     def test_delete_all_prog(self):
         self.write_prog_in_config([self.schedule_fixture(), self.schedule_fixture()])
 
-        response = self.client.delete(f'/prog/zone1')
+        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
+            with patch('os.remove'):
+                response = self.client.delete(f'/prog/zone1')
         self.assertEqual(response.status_code, 200)
 
         config = Config().get_config()

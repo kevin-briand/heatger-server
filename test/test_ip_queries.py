@@ -55,7 +55,8 @@ class TestIpQueries(unittest.TestCase):
         ip = self.ip_fixture()
         self.write_ip_in_config([ip])
 
-        response = self.client.get('/ip')
+        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
+            response = self.client.get('/ip')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(IpDto.array_to_ip_dto(json.loads(response.data)), [ip])
@@ -66,7 +67,9 @@ class TestIpQueries(unittest.TestCase):
 
         request_json = json.dumps(ip, cls=FileEncoder)
 
-        response = self.client.post('/ip', data=request_json, mimetype='application/json')
+        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
+            with patch('os.remove'):
+                response = self.client.post('/ip', data=request_json, mimetype='application/json')
 
         self.assertEqual(response.status_code, 200)
         config = Config().get_config()
@@ -76,7 +79,9 @@ class TestIpQueries(unittest.TestCase):
         ip = self.ip_fixture()
         self.write_ip_in_config([ip])
 
-        response = self.client.delete(f'/ip/{ip.ip}')
+        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
+            with patch('os.remove'):
+                response = self.client.delete(f'/ip/{ip.ip}')
 
         self.assertEqual(response.status_code, 200)
         config = Config().get_config()
@@ -86,7 +91,9 @@ class TestIpQueries(unittest.TestCase):
         ip = self.ip_fixture()
         self.write_ip_in_config([ip])
 
-        response = self.client.delete(f'/ip/{self.ip_fixture().ip}')
+        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
+            with patch('os.remove'):
+                response = self.client.delete(f'/ip/{self.ip_fixture().ip}')
         self.assertEqual(response.status_code, 404)
 
         config = Config().get_config()
