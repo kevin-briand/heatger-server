@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Union
 
-from src.localStorage.jsonEncoder.file_encoder import FileEncoder
+from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
 from src.zone.consts import NAME, STATE, NEXT_CHANGE, MODE, IS_PING
@@ -22,7 +22,7 @@ class InfoZone:
 
     def to_json(self) -> str:
         """Convert object to json"""
-        return json.dumps(self.to_object(), cls=FileEncoder)
+        return json.dumps(self.to_object(), cls=JsonEncoder)
 
     def to_object(self) -> dict[str, Union[str, datetime, bool]]:
         """return an object"""

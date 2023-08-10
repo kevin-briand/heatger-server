@@ -12,11 +12,11 @@ class ZonePersistenceDto:
 
     # pylint: disable=unused-argument
     def __init__(self, zone_id: str, state: Union[State, int], mode: Union[Mode, int], **kwargs):
-        self.id = zone_id
+        self.zone_id = zone_id
         self.state = State(state) if isinstance(state, int) else state
         self.mode = Mode(mode) if isinstance(mode, int) else mode
 
     def __eq__(self, other: 'ZonePersistenceDto') -> bool:
         if other is None:
             return False
-        return self.id == other.id
+        return self.zone_id == other.zone_id

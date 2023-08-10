@@ -4,7 +4,7 @@ import smbus2
 
 from src.I2C.temperature.dto.sensor_dto import SensorDto
 from src.I2C.temperature.temperature import Temperature
-from src.localStorage.config import Config
+from src.localStorage.config.config import Config
 
 
 class BME280(Temperature):

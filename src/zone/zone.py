@@ -5,15 +5,15 @@ import time
 from datetime import datetime
 from typing import Optional
 
-from src.localStorage.config import Config
-from src.localStorage.persistence import Persistence
+from src.localStorage.config.config import Config
+from src.localStorage.persistence.persistence import Persistence
 from src.network.ping.ping import Ping
 from src.pilot.pilot import Pilot
 from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
 from src.shared.logs.logs import Logs
 from src.zone.base import Base
-from src.zone.consts import ZONE
+from src.zone.consts import ZONE, REGEX_FIND_NUMBER, WAIT_TIME
 
 from src.zone.dto.schedule_dto import ScheduleDto
 from src.zone.dto.info_zone import InfoZone
@@ -26,7 +26,6 @@ class Zone(Base):
         super().__init__()
         config = getattr(Config().get_config(), F"{ZONE}{number}")
         self.zone_id = F"{ZONE}{number}"
-        Logs.info(self.zone_id, 'Init Zone ' + str(number))
         self.name = config.name
         self.current_state = State.ECO
         self.current_mode = Mode.AUTO
@@ -36,7 +35,6 @@ class Zone(Base):
         self.ping = Ping(self.zone_id, self.on_ip_found)
         self.is_ping = False
         self.restore_state()
-        Logs.info(self.zone_id, 'Started !')
 
     def restore_state(self) -> None:
         """Restore state/mode after a device reboot"""
@@ -64,6 +62,7 @@ class Zone(Base):
             self.is_ping = False
         else:
             self.current_mode = Mode.AUTO
+            self.start_next_state()
         Persistence().set_mode(self.zone_id, self.current_mode)
         Logs.info(self.zone_id, "Mode set to " + self.current_mode.name)
         if self.current_mode == Mode.AUTO:
@@ -73,7 +72,6 @@ class Zone(Base):
         """Launch next timer (mode Auto)"""
         if self.current_mode != Mode.AUTO:
             return
-
         current_schedule, next_schedule = self.get_current_and_next_schedule()
         if current_schedule is None or next_schedule is None:
             return
@@ -90,7 +88,6 @@ class Zone(Base):
         zone_config = getattr(Config().get_config(), self.zone_id)
         list_schedules = zone_config.prog
         if list_schedules is None or len(list_schedules) == 0:
-            Logs.error(self.zone_id, "schedule list is empty")
             return [None, None]
 
         current_schedule: Optional[ScheduleDto] = None
@@ -102,9 +99,10 @@ class Zone(Base):
             if schedule_date > now and schedule is not self.current_schedule:
                 if next_schedule is None or schedule_date < Zone.get_next_day(next_schedule.day, next_schedule.hour):
                     next_schedule = schedule
-            if schedule_date <= now and (current_schedule is None or
-                                         schedule_date > Zone.get_next_day(current_schedule.day,
-                                                                           current_schedule.hour) < schedule_date):
+
+            if schedule_date <= now and (
+                    current_schedule is None or
+                    schedule_date > Zone.get_next_day(current_schedule.day, current_schedule.hour)):
                 current_schedule = schedule
 
         if current_schedule is None:
@@ -152,7 +150,7 @@ class Zone(Base):
             self.set_state(self.next_state)
             self.ping.stop()
             self.is_ping = False
-        time.sleep(1)  # wait 1sec before start next timer to avoid a loop
+        time.sleep(WAIT_TIME)  # wait 1sec before start next timer to avoid a loop
         self.start_next_state()
 
     def toggle_state(self) -> None:
@@ -171,9 +169,8 @@ class Zone(Base):
             self.ping.stop()
             self.is_ping = False
             self.set_state(State.FROSTFREE)
-        else:
-            if self.current_mode == Mode.MANUAL:
-                self.toggle_mode()
+        elif self.current_mode == Mode.MANUAL:
+            self.toggle_mode()
 
     def get_data(self) -> InfoZone:
         """return information zone in json object"""
@@ -191,7 +188,7 @@ class Zone(Base):
     @staticmethod
     def get_zone_number(topic: str) -> int:
         """Return the zone number, else -1"""
-        zone_number = re.search(r"\d", topic)
+        zone_number = re.search(REGEX_FIND_NUMBER, topic)
         if zone_number is None:
             return -1
         return int(zone_number.group(0))

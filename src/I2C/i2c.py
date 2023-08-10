@@ -12,8 +12,8 @@ from src.I2C.screen.enum.vue import Vue
 from src.I2C.screen.screen import Screen
 from src.I2C.temperature.bme280.bme_280 import BME280
 from src.I2C.temperature.dto.sensor_dto import SensorDto
-from src.localStorage.config import Config
-from src.localStorage.jsonEncoder.file_encoder import FileEncoder
+from src.localStorage.config.config import Config
+from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, STATE_NAME
 from src.network.mqtt.mqtt_impl import MqttImpl
 from src.network.network import Network
@@ -72,7 +72,7 @@ class I2C(Thread, MqttImpl):
                 self.screen_device.set_temperature(data)
                 self.screen_need_update = True
                 self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, I2C_CONST),
-                                        json.dumps(data, cls=FileEncoder))
+                                        json.dumps(data, cls=JsonEncoder))
             time.sleep(0.5)
 
     def set_zones_datas_and_update_screen(self, zones_datas) -> None:

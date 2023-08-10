@@ -11,4 +11,4 @@ class IODto:
     # pylint: disable=unused-argument
     def __init__(self, enabled, device, **kwargs):
         self.enabled = enabled
-        self.device = DeviceDto(**device)
+        self.device = device if isinstance(device, DeviceDto) else DeviceDto(**device)

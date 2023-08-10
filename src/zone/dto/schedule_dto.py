@@ -11,7 +11,7 @@ class ScheduleDto:
     """schedule data object"""
 
     # pylint: disable=unused-argument
-    def __init__(self, day, hour: time, state, *args, **kwargs):
+    def __init__(self, day, hour: time, state, **kwargs):
         self.day = day
         self.hour = hour
         self.state = state
@@ -29,6 +29,11 @@ class ScheduleDto:
         return {'day': self.day,
                 'hour': self.hour,
                 'state': self.state.value}
+
+    def __eq__(self, other: 'ScheduleDto'):
+        if other is None:
+            return False
+        return self.to_value() == other.to_value()
 
     @staticmethod
     def from_array(data: list) -> list['ScheduleDto']:

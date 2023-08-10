@@ -1,7 +1,7 @@
 """Api Middleware"""
 from werkzeug.wrappers import Request, Response
 
-from src.localStorage.persistence import Persistence
+from src.localStorage.persistence.persistence import Persistence
 
 
 class Middleware:

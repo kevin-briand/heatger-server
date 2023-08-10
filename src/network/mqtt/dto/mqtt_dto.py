@@ -7,7 +7,7 @@ class MqttDto:
     """network data object"""
 
     # pylint: disable=unused-argument
-    def __init__(self, enabled, host, port, username, password, *args, **kwargs):
+    def __init__(self, enabled, host, port, username, password, **kwargs):
         self.enabled = enabled
         self.host = host
         self.port = port

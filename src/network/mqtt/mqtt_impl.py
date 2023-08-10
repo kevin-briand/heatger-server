@@ -3,7 +3,7 @@ from abc import ABCMeta
 
 from paho.mqtt.client import MQTTMessage
 
-from src.localStorage.config import Config
+from src.localStorage.config.config import Config
 from src.network.mqtt.consts import REFRESH
 from src.network.network import Network
 

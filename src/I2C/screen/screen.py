@@ -9,7 +9,7 @@ from src.I2C.screen.enum.vue import Vue
 from src.I2C.screen.vues.general_vue import GeneralVue
 from src.I2C.screen.vues.set_order_vue import SetOrderVue
 from src.I2C.temperature.dto.sensor_dto import SensorDto
-from src.localStorage.config import Config
+from src.localStorage.config.config import Config
 
 
 class Screen:

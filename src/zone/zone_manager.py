@@ -8,8 +8,8 @@ from typing import Optional
 from paho.mqtt.client import MQTTMessage
 
 from src.I2C.i2c import I2C
-from src.localStorage.config import Config
-from src.localStorage.jsonEncoder.file_encoder import FileEncoder
+from src.localStorage.config.config import Config
+from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.network.mqtt.homeAssistant.consts import SWITCH_MODE, SWITCH_STATE, \
     BUTTON_FROSTFREE, PUBLISH_DATA_SENSOR, STATE_NAME
 from src.network.mqtt.mqtt_impl import MqttImpl
@@ -53,6 +53,7 @@ class ZoneManager(Thread, MqttImpl):
         i = 1
         while getattr(Config().get_config(), F"{ZONE}{i}") is not None:
             self.zones.append(Zone(i))
+            Logs.info(F"{ZONE}{i}", F"Init Zone {i}")
             i += 1
 
     def init_frostfree(self) -> None:
@@ -122,7 +123,7 @@ class ZoneManager(Thread, MqttImpl):
     def refresh_mqtt_zones_datas(self) -> None:
         """Refresh MQTT datas"""
         self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ZONE),
-                                json.dumps(self.current_datas, cls=FileEncoder))
+                                json.dumps(self.current_datas, cls=JsonEncoder))
 
     def refresh_i2c_datas(self) -> None:
         """Refresh I2C datas"""

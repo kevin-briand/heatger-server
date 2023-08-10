@@ -25,7 +25,7 @@ class TestBase(unittest.TestCase):
         # should return day + 6
         self.assertEqual(Base.get_next_day(now.weekday()-1, now.time()), self.get_shifted_date_from_now(6))
         # should return day + 7
-        past_hour = now.replace(hour=now.hour-1)
+        past_hour = now.time().replace(hour=now.hour-1)
         self.assertEqual(Base.get_next_day(now.weekday(), past_hour),
                          self.get_shifted_date_from_now(7).replace(hour=now.hour-1))
 

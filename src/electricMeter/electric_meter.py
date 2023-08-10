@@ -8,8 +8,8 @@ import pigpio
 from src.electricMeter.consts import ELECTRIC_METER, CLASSNAME
 from src.external.gpio.consts import INPUT
 from src.external.gpio.gpio import Gpio
-from src.localStorage.config import Config
-from src.localStorage.jsonEncoder.file_encoder import FileEncoder
+from src.localStorage.config.config import Config
+from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, STATE_NAME
 from src.network.mqtt.mqtt_impl import MqttImpl
 from src.network.network import Network
@@ -76,4 +76,4 @@ class ElectricMeter(Thread, MqttImpl):
     def refresh_mqtt_em_datas(self) -> None:
         """Send input data to mqtt"""
         self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, ELECTRIC_METER),
-                                json.dumps({ELECTRIC_METER: self.counter}, cls=FileEncoder))
+                                json.dumps({ELECTRIC_METER: self.counter}, cls=JsonEncoder))

@@ -1,17 +1,18 @@
 """Persistence class"""
 from typing import Optional
 
-from src.localStorage.dto.persistence_dto import PersistenceDto
+from src.localStorage.persistence.dto.persistence_dto import PersistenceDto
 from src.localStorage.local_storage import LocalStorage
+from src.localStorage.persistence.errors.persistence_error import PersistenceError
 from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
+from src.shared.errors.file_not_readable_error import FileNotReadableError
+from src.shared.errors.file_not_writable_error import FileNotWritableError
 from src.zone.dto.zone_persistence_dto import ZonePersistenceDto
-
-CLASSNAME = 'Persistence'
 
 
 class Persistence(LocalStorage):
-    """Load/Save Heatger state in file"""
+    """Load/Save Heatger states in file"""
     _initialized = False
     _instance: Optional['Persistence'] = None
 
@@ -26,50 +27,51 @@ class Persistence(LocalStorage):
 
         super().__init__('persist.json')
         try:
-            self.persist = PersistenceDto(**self.read())
+            self.persist = PersistenceDto(**self._read())
         except TypeError:
             self.persist = PersistenceDto([], '', '')
-            self.save_in_file()
+            self.__save_in_file()
+        except FileNotReadableError as exc:
+            raise PersistenceError('file not readable') from exc
         Persistence._initialized = True
 
-    def save_in_file(self):
+    def __save_in_file(self):
         """Save persistence object to file"""
-        self.write(self.persist)
-
-    def set_state(self, zone_id: str, state: State):
-        """write order in file"""
-        zone = self.get_zone(zone_id)
-        zone.state = state
-        self.set_zone(zone)
-
-    def set_mode(self, zone_id: str, mode: Mode):
-        """write mode in file"""
-        zone = self.get_zone(zone_id)
-        zone.mode = mode
-        self.set_zone(zone)
+        try:
+            self._write(self.persist)
+        except FileNotWritableError as exc:
+            raise PersistenceError('file not writable') from exc
 
     def get_state(self, zone_id: str) -> State:
         """get order in file"""
-        zone = self.get_zone(zone_id)
-        if zone:
-            return zone.state
-        return State.COMFORT
+        zone = self.__get_zone(zone_id)
+        return zone.state
+
+    def set_state(self, zone_id: str, state: State):
+        """write order in file"""
+        zone = self.__get_zone(zone_id)
+        zone.state = state
+        self.__set_zone(zone)
 
     def get_mode(self, zone_id: str) -> Mode:
         """get mode in file"""
-        zone = self.get_zone(zone_id)
-        if zone:
-            return zone.mode
-        return Mode.AUTO
+        zone = self.__get_zone(zone_id)
+        return zone.mode
 
-    def get_zone(self, zone_id: str) -> ZonePersistenceDto:
+    def set_mode(self, zone_id: str, mode: Mode):
+        """write mode in file"""
+        zone = self.__get_zone(zone_id)
+        zone.mode = mode
+        self.__set_zone(zone)
+
+    def __get_zone(self, zone_id: str) -> ZonePersistenceDto:
         """return the zone matching with id or a new zone if not exist"""
         for zone in self.persist.zones:
-            if zone.id == zone_id:
+            if zone.zone_id == zone_id:
                 return zone
         return ZonePersistenceDto(zone_id, State.ECO, Mode.AUTO)
 
-    def set_zone(self, zone_dto: ZonePersistenceDto) -> None:
+    def __set_zone(self, zone_dto: ZonePersistenceDto) -> None:
         """update the zone with the given zone_dto object"""
         zones_list = []
         for zone in self.persist.zones:
@@ -77,22 +79,22 @@ class Persistence(LocalStorage):
                 zones_list.append(zone)
         zones_list.append(zone_dto)
         self.persist.zones = zones_list
-        self.save_in_file()
+        self.__save_in_file()
 
-    def set_token(self, token: str):
-        """update the api token"""
-        self.persist.api_token = token
-        self.save_in_file()
-
-    def set_frostfree_end_date(self, end_date: str):
-        """update the frost-free end date"""
-        self.persist.frost_free = end_date
-        self.save_in_file()
-
-    def get_frostfree_end_date(self):
-        """return the current frost-free end date"""
-        return self.persist.frost_free
-
-    def get_api_token(self):
+    def get_api_token(self) -> str:
         """return the api token"""
         return self.persist.api_token
+
+    def set_api_token(self, token: str) -> None:
+        """update the api token"""
+        self.persist.api_token = token
+        self.__save_in_file()
+
+    def set_frostfree_end_date(self, end_date: str) -> None:
+        """update the frost-free end date"""
+        self.persist.frost_free = end_date
+        self.__save_in_file()
+
+    def get_frostfree_end_date(self) -> str:
+        """return the current frost-free end date"""
+        return self.persist.frost_free

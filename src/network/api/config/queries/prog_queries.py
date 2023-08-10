@@ -4,8 +4,9 @@ from typing import Optional
 
 from flask import abort, Blueprint, request
 
-from src.localStorage.config import Config
-from src.localStorage.jsonEncoder.file_encoder import FileEncoder
+from src.localStorage.config.config import Config
+from src.localStorage.config.errors.config_error import ConfigError
+from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.zone.dto.schedule_dto import ScheduleDto
 
 prog_bp = Blueprint('prog', __name__)
@@ -15,7 +16,9 @@ prog_bp = Blueprint('prog', __name__)
 def get_prog(zone=None):
     """return an array of prog corresponding of zone"""
     try:
-        return json.dumps(getattr(Config().get_config(), zone).prog, cls=FileEncoder)
+        return json.dumps(getattr(Config().get_config(), zone).prog, cls=JsonEncoder)
+    except ConfigError:
+        abort(404)
     except AttributeError:
         abort(404)
 
@@ -26,7 +29,9 @@ def post_prog(zone=None):
     if request.json is not None:
         try:
             Config().add_schedules(zone, ScheduleDto.from_array(request.json))
-            return json.dumps(getattr(Config().get_config(), zone).prog, cls=FileEncoder)
+            return json.dumps(getattr(Config().get_config(), zone).prog, cls=JsonEncoder)
+        except ConfigError:
+            abort(404)
         except AttributeError:
             abort(404)
     abort(400)
@@ -45,7 +50,9 @@ def delete_prog(zone, value: str):
         if result_schedule is None:
             abort(404)
         Config().remove_schedule(zone, result_schedule)
-        return json.dumps(getattr(Config().get_config(), zone).prog, cls=FileEncoder)
+        return json.dumps(getattr(Config().get_config(), zone).prog, cls=JsonEncoder)
+    except ConfigError:
+        abort(404)
     except AttributeError:
         abort(404)
 
@@ -55,6 +62,6 @@ def delete_all_prog(zone):
     """remove all prog of zone, return an array of prog corresponding of zone"""
     try:
         Config().remove_all_schedule(zone)
-        return json.dumps(getattr(Config().get_config(), zone).prog, cls=FileEncoder)
-    except AttributeError:
+        return json.dumps(getattr(Config().get_config(), zone).prog, cls=JsonEncoder)
+    except ConfigError:
         abort(404)

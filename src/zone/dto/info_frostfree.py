@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from src.localStorage.jsonEncoder.file_encoder import FileEncoder
+from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 
 
 @dataclass
@@ -14,7 +14,7 @@ class InfoFrostfree:
 
     def to_json(self) -> str:
         """Convert object to json"""
-        return json.dumps(self.to_object(), cls=FileEncoder)
+        return json.dumps(self.to_object(), cls=JsonEncoder)
 
     def to_object(self) -> dict[str, Optional[datetime]]:
         """return an object"""

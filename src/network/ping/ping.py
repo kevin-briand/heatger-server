@@ -5,7 +5,7 @@ from threading import Thread
 
 from scapy.layers.l2 import Ether, ARP, srp
 
-from src.localStorage.config import Config
+from src.localStorage.config.config import Config
 from src.shared.logs.logs import Logs
 
 

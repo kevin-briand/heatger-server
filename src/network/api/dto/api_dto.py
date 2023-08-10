@@ -7,7 +7,7 @@ class ApiDto:
     """API data object"""
 
     # pylint: disable=unused-argument
-    def __init__(self, username: str, password: str, *args, **kwargs):
+    def __init__(self, username: str, password: str, **kwargs):
         self.username = username
         self.password = password
 

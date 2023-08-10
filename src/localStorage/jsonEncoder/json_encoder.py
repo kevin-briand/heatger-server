@@ -7,7 +7,7 @@ from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
 
 
-class FileEncoder(JSONEncoder):
+class JsonEncoder(JSONEncoder):
     """Serialize objects"""
     def default(self, o):
         if isinstance(o, State):

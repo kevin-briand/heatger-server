@@ -1,7 +1,7 @@
 """Frostfree class"""
 from datetime import datetime
 
-from src.localStorage.persistence import Persistence
+from src.localStorage.persistence.persistence import Persistence
 from src.shared.enum.state import State
 from src.shared.logs.logs import Logs
 from src.zone.base import Base

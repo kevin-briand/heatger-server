@@ -4,8 +4,9 @@ from typing import Optional
 
 from flask import abort, Blueprint, request
 
-from src.localStorage.config import Config
-from src.localStorage.jsonEncoder.file_encoder import FileEncoder
+from src.localStorage.config.config import Config
+from src.localStorage.config.errors.config_error import ConfigError
+from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.network.dto.ip_dto import IpDto
 
 ip_bp = Blueprint('ip', __name__)
@@ -14,7 +15,7 @@ ip_bp = Blueprint('ip', __name__)
 @ip_bp.get("/ip")
 def get_ip():
     """Return a list of IpDto"""
-    return json.dumps(Config().get_config().network.ip, cls=FileEncoder)
+    return json.dumps(Config().get_config().network.ip, cls=JsonEncoder)
 
 
 @ip_bp.post("/ip")
@@ -23,8 +24,8 @@ def post_ip():
     if request.json is not None:
         try:
             Config().add_ip(IpDto.object_to_ip_dto(request.json))
-            return json.dumps(Config().get_config().network.ip, cls=FileEncoder)
-        except AttributeError:
+            return json.dumps(Config().get_config().network.ip, cls=JsonEncoder)
+        except ConfigError:
             abort(400)
     abort(400)
 
@@ -39,6 +40,5 @@ def delete_ip(ip: str):
             break
     if result_ip is None:
         abort(404)
-
     Config().remove_ip(result_ip)
-    return json.dumps(Config().get_config().network.ip, cls=FileEncoder)
+    return json.dumps(Config().get_config().network.ip, cls=JsonEncoder)

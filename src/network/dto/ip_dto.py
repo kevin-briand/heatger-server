@@ -8,9 +8,14 @@ class IpDto:
     """Ip data object"""
 
     # pylint: disable=unused-argument
-    def __init__(self, name, ip, *args, **kwargs):
+    def __init__(self, name, ip, **kwargs):
         self.name = name
         self.ip = ip
+
+    def __eq__(self, other: 'IpDto'):
+        if other is None:
+            return False
+        return self.ip == other.ip
 
     @staticmethod
     def array_to_ip_dto(data: []) -> List['IpDto']:

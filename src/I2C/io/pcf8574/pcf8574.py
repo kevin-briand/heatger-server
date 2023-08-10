@@ -4,7 +4,7 @@ import pcf8574_io
 from src.I2C.io.consts import *
 from src.I2C.io.enum.button import Button
 from src.I2C.io.enum.led_color import LedColor
-from src.localStorage.config import Config
+from src.localStorage.config.config import Config
 from src.shared.logs.logs import Logs
 
 
