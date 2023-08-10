@@ -42,7 +42,8 @@ class TestProgQueries(unittest.TestCase):
         request_json = json.dumps([schedule], cls=JsonEncoder)
 
         with patch.object(Config, 'get_config', return_value=self.config):
-            response = self.client.post('/prog/zone1', data=request_json, mimetype='application/json')
+            with patch('os.remove'):
+                response = self.client.post('/prog/zone1', data=request_json, mimetype='application/json')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), self.config.zone1.prog)
@@ -57,7 +58,8 @@ class TestProgQueries(unittest.TestCase):
         schedule = self.config.zone1.prog[0]
 
         with patch.object(Config, 'get_config', return_value=self.config):
-            response = self.client.delete(f'/prog/zone1/{schedule.to_value()}')
+            with patch('os.remove'):
+                response = self.client.delete(f'/prog/zone1/{schedule.to_value()}')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), self.config.zone1.prog)
@@ -76,7 +78,8 @@ class TestProgQueries(unittest.TestCase):
 
     def test_delete_all_prog(self):
         with patch.object(Config, 'get_config', return_value=self.config):
-            response = self.client.delete(f'/prog/zone1')
+            with patch('os.remove'):
+                response = self.client.delete(f'/prog/zone1')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), [])
