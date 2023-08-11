@@ -1,11 +1,10 @@
 """ConfigError Exception"""
 from src.localStorage.config.consts import CLASSNAME
-from src.shared.logs.logs import Logs
+from src.localStorage.errors.local_storage_error import LocalStorageError
 
 
-class ConfigError(Exception):
+class ConfigError(LocalStorageError):
     """return a Config exception"""
 
     def __init__(self, message: str):
-        Logs.error(CLASSNAME, message)
-        super().__init__(F"{CLASSNAME}: {message}")
+        super().__init__(message, CLASSNAME)

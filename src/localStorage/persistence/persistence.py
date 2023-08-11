@@ -3,11 +3,8 @@ from typing import Optional
 
 from src.localStorage.persistence.dto.persistence_dto import PersistenceDto
 from src.localStorage.local_storage import LocalStorage
-from src.localStorage.persistence.errors.persistence_error import PersistenceError
 from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
-from src.shared.errors.file_not_readable_error import FileNotReadableError
-from src.shared.errors.file_not_writable_error import FileNotWritableError
 from src.zone.dto.zone_persistence_dto import ZonePersistenceDto
 
 
@@ -31,16 +28,11 @@ class Persistence(LocalStorage):
         except TypeError:
             self.persist = PersistenceDto([], '', '')
             self.__save_in_file()
-        except FileNotReadableError as exc:
-            raise PersistenceError('file not readable') from exc
         Persistence._initialized = True
 
     def __save_in_file(self):
         """Save persistence object to file"""
-        try:
-            self._write(self.persist)
-        except FileNotWritableError as exc:
-            raise PersistenceError('file not writable') from exc
+        self._write(self.persist)
 
     def get_state(self, zone_id: str) -> State:
         """get order in file"""

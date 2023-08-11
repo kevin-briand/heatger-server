@@ -2,12 +2,16 @@
 from typing import Optional
 
 from src.localStorage.config.dto.config_dto import ConfigDto
+from src.localStorage.config.errors.already_exist_error import AlreadyExistError
+from src.localStorage.config.errors.bad_ip_format_error import BadIpFormatError
 from src.localStorage.config.errors.config_error import ConfigError
+from src.localStorage.config.errors.schedule_not_valid_error import ScheduleNotValidError
+from src.localStorage.config.errors.zone_not_found_error import ZoneNotFoundError
+from src.localStorage.errors.missing_arg_error import MissingArgError
 from src.localStorage.local_storage import LocalStorage
 from src.network.dto.ip_dto import IpDto
-from src.shared.errors.file_not_readable_error import FileNotReadableError
-from src.shared.errors.file_not_writable_error import FileNotWritableError
 from src.zone.dto.schedule_dto import ScheduleDto
+from src.zone.dto.zone_dto import ZoneDto
 
 
 class Config(LocalStorage):
@@ -30,29 +34,24 @@ class Config(LocalStorage):
         """return a ConfigDto object"""
         try:
             return ConfigDto(**self._read())
-        except FileNotReadableError as exc:
-            raise ConfigError('file not readable') from exc
         except TypeError as exc:
-            raise ConfigError('missing arguments in the file') from exc
+            raise MissingArgError() from exc
 
     def __save_data(self, config) -> None:
         """write a ConfigDto object to file"""
-        try:
-            self._write(config)
-        except FileNotWritableError as exc:
-            raise ConfigError('file not writable') from exc
+        self._write(config)
 
     def add_ip(self, ip: IpDto) -> None:
         """Adding ip to scanned ip list"""
         from src.network.ping.ping import Ping
         if not Ping.is_valid_ip(ip.ip):
-            raise ConfigError('Bad ip format !')
+            raise BadIpFormatError(ip.ip)
 
         config = self.get_config()
         network_config = config.network
         ips_list = network_config.ip
         if not all(ip_in_list.ip != ip.ip for ip_in_list in ips_list):
-            raise ConfigError('Ip already exist !')
+            raise AlreadyExistError(ip.ip)
 
         ips_list.append(ip)
         self.__save_data(config)
@@ -61,7 +60,7 @@ class Config(LocalStorage):
         """removing ip to scanned ip list"""
         from src.network.ping.ping import Ping
         if not Ping.is_valid_ip(ip.ip):
-            raise ConfigError('Bad ip format !')
+            raise BadIpFormatError(ip.ip)
 
         config = self.get_config()
         network_config = config.network
@@ -72,16 +71,16 @@ class Config(LocalStorage):
     def add_schedule(self, zone_id: str, schedule: ScheduleDto) -> None:
         """adding schedule to prog list"""
         if not schedule.is_valid_schedule():
-            raise ConfigError('schedule is not valid !')
+            raise ScheduleNotValidError()
         if not self.__is_zone_exist(zone_id):
-            raise ConfigError('Zone not found !')
+            raise ZoneNotFoundError(zone_id)
 
         config = self.get_config()
         zone = getattr(config, zone_id)
         prog: list[ScheduleDto] = zone.prog
 
         if not all(sch.to_value() != schedule.to_value() for sch in prog):
-            raise ConfigError('schedule already exist !')
+            raise AlreadyExistError('Schedule')
         prog.append(schedule)
         prog.sort(key=Config._sort_schedule)
         self.__save_data(config)
@@ -89,7 +88,7 @@ class Config(LocalStorage):
     def add_schedules(self, zone_id: str, schedules: [ScheduleDto]) -> None:
         """adding schedules list to prog list"""
         if not self.__is_zone_exist(zone_id):
-            raise ConfigError('Zone not found !')
+            raise ZoneNotFoundError(zone_id)
         for schedule in schedules:
             try:
                 self.add_schedule(zone_id, schedule)
@@ -104,9 +103,9 @@ class Config(LocalStorage):
     def remove_schedule(self, zone_id: str, schedule: ScheduleDto) -> None:
         """removing schedule to prog list"""
         if not schedule.is_valid_schedule():
-            raise ConfigError('schedule is not valid !')
+            raise ScheduleNotValidError()
         if not self.__is_zone_exist(zone_id):
-            raise ConfigError('Zone not found !')
+            raise ZoneNotFoundError(zone_id)
 
         config = self.get_config()
         zone = getattr(config, zone_id)
@@ -117,7 +116,7 @@ class Config(LocalStorage):
     def remove_all_schedule(self, zone_id: str) -> None:
         """removing all schedule to prog list"""
         if not self.__is_zone_exist(zone_id):
-            raise ConfigError('Zone not found !')
+            raise ZoneNotFoundError(zone_id)
         config = self.get_config()
         zone = getattr(config, zone_id)
         prog = zone.prog
@@ -132,3 +131,9 @@ class Config(LocalStorage):
         if zone_id is None:
             return False
         return getattr(self.get_config(), zone_id, None) is not None
+
+    def get_zone(self, zone_id: str) -> ZoneDto:
+        """return the ZoneDto corresponding to the zone_id"""
+        if not self.__is_zone_exist(zone_id):
+            raise ZoneNotFoundError(zone_id)
+        return getattr(self.get_config(), zone_id)

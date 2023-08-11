@@ -24,7 +24,7 @@ class Zone(Base):
 
     def __init__(self, number: int):
         super().__init__()
-        config = getattr(Config().get_config(), F"{ZONE}{number}")
+        config = Config().get_zone(F"{ZONE}{number}")
         self.zone_id = F"{ZONE}{number}"
         self.name = config.name
         self.current_state = State.ECO
@@ -85,7 +85,7 @@ class Zone(Base):
 
     def get_current_and_next_schedule(self) -> list[Optional[ScheduleDto], Optional[ScheduleDto]]:
         """get the current and next schedule in prog list"""
-        zone_config = getattr(Config().get_config(), self.zone_id)
+        zone_config = Config().get_zone(self.zone_id)
         list_schedules = zone_config.prog
         if list_schedules is None or len(list_schedules) == 0:
             return [None, None]

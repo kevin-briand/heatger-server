@@ -4,10 +4,10 @@ import os
 import time
 
 from src.localStorage.consts import CLASSNAME
+from src.localStorage.errors.file_not_readable_error import FileNotReadableError
+from src.localStorage.errors.file_not_writable_error import FileNotWritableError
 from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.shared.errors.file_empty_error import FileEmptyError
-from src.shared.errors.file_not_readable_error import FileNotReadableError
-from src.shared.errors.file_not_writable_error import FileNotWritableError
 
 
 class LocalStorage:
@@ -36,7 +36,7 @@ class LocalStorage:
         with open(self.path + self.filename, 'r', encoding='utf-8') as file:
             file.seek(0)
             if not file.readable():
-                raise FileNotReadableError(CLASSNAME, self.filename)
+                raise FileNotReadableError(self.filename)
             json_data = file.read()
             if json_data == '':
                 raise FileEmptyError(CLASSNAME, self.filename)
@@ -49,7 +49,7 @@ class LocalStorage:
         os.remove(self.path + self.filename)
         with open(self.path + self.filename, 'w', encoding='utf-8') as file:
             if not file.writable():
-                raise FileNotWritableError(CLASSNAME, self.filename)
+                raise FileNotWritableError(self.filename)
             file.write(json.dumps(data, indent=4, cls=JsonEncoder))
             self.data = json.dumps(data, indent=4, cls=JsonEncoder)
         self.is_write = False
