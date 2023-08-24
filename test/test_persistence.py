@@ -23,6 +23,14 @@ class TestPersistence(unittest.TestCase):
         Persistence._initialized = False
         self.persistence = persistence_dto_fixture()
         TestPersistence.persistence_datas = json.dumps(self.persistence, cls=JsonEncoder)
+        self.open_file = patch('src.localStorage.local_storage.open', self.mock_open_file())
+        self.open_file.start()
+        self.remove_file = patch('os.remove')
+        self.remove_file.start()
+
+    def tearDown(self) -> None:
+        self.open_file.stop()
+        self.remove_file.stop()
 
     @staticmethod
     def mock_open_file():
@@ -32,40 +40,33 @@ class TestPersistence(unittest.TestCase):
         return mock_open_obj
 
     def test_get_state(self):
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
-            state = Persistence().get_state(ZONE_ID)
+        state = Persistence().get_state(ZONE_ID)
 
         self.assertEqual(State.ECO, state)
 
     def test_set_state(self):
         state = State.COMFORT
 
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
-            with patch('os.remove'):
-                Persistence().set_state(ZONE_ID, state)
+        Persistence().set_state(ZONE_ID, state)
         result = Persistence().persist.zones[0].state
 
         self.assertEqual(result, state)
 
     def test_get_mode(self):
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
-                mode = Persistence().get_mode(ZONE_ID)
+        mode = Persistence().get_mode(ZONE_ID)
 
         self.assertEqual(Mode.AUTO, mode)
 
     def test_set_mode(self):
         mode = Mode.MANUAL
 
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
-            with patch('os.remove'):
-                Persistence().set_mode(ZONE_ID, mode)
+        Persistence().set_mode(ZONE_ID, mode)
         result = Persistence().persist.zones[0].mode
 
         self.assertEqual(result, mode)
 
     def test_get_api_token(self):
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
-            token = Persistence().get_api_token()
+        token = Persistence().get_api_token()
         result = self.persistence.api_token
 
         self.assertEqual(result, token)
@@ -73,27 +74,28 @@ class TestPersistence(unittest.TestCase):
     def test_set_api_token(self):
         token = Faker().uuid4()
 
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
-            with patch('os.remove'):
-                Persistence().set_api_token(token)
-            result = Persistence().persist.api_token
+        Persistence().set_api_token(token)
+        result = Persistence().persist.api_token
 
         self.assertEqual(result, token)
 
     def test_get_frostfree_end_date(self):
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
-            end_date = Persistence().get_frostfree_end_date()
-        result = self.persistence.frost_free
+        excepted = datetime.datetime.now().replace(second=0, microsecond=0)
+        Persistence().persist.frost_free = excepted.strftime('%Y-%m-%d %H:%M')
+        end_date = Persistence().get_frostfree_end_date().replace(second=0, microsecond=0)
 
-        self.assertEqual(result, end_date)
+        self.assertEqual(excepted, end_date)
+
+    def test_get_frostfree_end_date_should_return_none_if_no_date_set_in_file(self):
+        end_date = Persistence().get_frostfree_end_date()
+
+        self.assertEqual(end_date, None)
 
     def test_set_frostfree_end_date(self):
-        end_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
+        end_date = datetime.datetime.now().replace(second=0, microsecond=0)
 
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
-            with patch('os.remove'):
-                Persistence().set_frostfree_end_date(end_date)
-            result = Persistence().persist.frost_free
+        Persistence().set_frostfree_end_date(end_date)
+        result = Persistence().get_frostfree_end_date()
 
         self.assertEqual(result, end_date)
 
@@ -104,18 +106,15 @@ class TestPersistence(unittest.TestCase):
         mock_file_handle.read.return_value = ''
 
         with patch('src.localStorage.local_storage.open', mock_open_obj()):
-            with patch('os.remove'):
-                Persistence()
+            Persistence()
 
         self.assertEqual(len(Persistence().persist.zones), 0)
 
-    def test_get_state_shoud_return_new_zone_if_unknown_zone_id(self):
+    def test_get_state_should_return_new_zone_if_unknown_zone_id(self):
         state = State.COMFORT
         zone = ZonePersistenceDto(BAD_ZONE_ID, state, Mode.AUTO)
 
-        with patch('src.localStorage.local_storage.open', self.mock_open_file()):
-            with patch('os.remove'):
-                Persistence().set_state(BAD_ZONE_ID, state)
+        Persistence().set_state(BAD_ZONE_ID, state)
 
         self.assertEqual(len(Persistence().persist.zones), 2)
         self.assertIn(zone, Persistence().persist.zones)

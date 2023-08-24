@@ -12,6 +12,7 @@ class Timer:
 
     def start(self, timeout, on_timeout_callback):
         """start timer with timeout in seconds, on timeout call on_timeout_callback"""
+        self.stop()
         self.time_start = datetime.now().timestamp()
         self.timeout = timeout
         self.timer_thread = threading.Timer(self.timeout, on_timeout_callback)

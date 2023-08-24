@@ -1,6 +1,6 @@
 from faker import Faker
 
-from src.I2C.dto.device_dto import DeviceDto
+from src.i2c.dto.device_dto import DeviceDto
 
 
 def device_dto_fixture() -> DeviceDto:

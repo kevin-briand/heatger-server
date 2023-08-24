@@ -1,4 +1,5 @@
 """Persistence class"""
+from datetime import datetime
 from typing import Optional
 
 from src.localStorage.persistence.dto.persistence_dto import PersistenceDto
@@ -82,11 +83,16 @@ class Persistence(LocalStorage):
         self.persist.api_token = token
         self.__save_in_file()
 
-    def set_frostfree_end_date(self, end_date: str) -> None:
+    def set_frostfree_end_date(self, end_date: datetime = None) -> None:
         """update the frost-free end date"""
-        self.persist.frost_free = end_date
+        if not end_date:
+            self.persist.frost_free = ''
+        else:
+            self.persist.frost_free = end_date.strftime('%Y-%m-%d %H:%M')
         self.__save_in_file()
 
-    def get_frostfree_end_date(self) -> str:
+    def get_frostfree_end_date(self) -> Optional[datetime]:
         """return the current frost-free end date"""
-        return self.persist.frost_free
+        if self.persist.frost_free == '':
+            return None
+        return datetime.strptime(self.persist.frost_free, '%Y-%m-%d %H:%M')

@@ -1,4 +1,4 @@
-from src.I2C.io.dto.io_dto import IODto
+from src.i2c.io.dto.io_dto import IODto
 from test.helpers.fixtures.localStorage.config.device_dto_fixture import device_dto_fixture
 
 

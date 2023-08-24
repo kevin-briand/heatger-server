@@ -2,7 +2,7 @@
 import platform
 
 if platform.system().lower() != 'windows':
-    from src.I2C.i2c import I2C
+    from src.i2c.i2c import I2C
 from src.network.api.api import Api
 from src.electricMeter.electric_meter import ElectricMeter
 from src.zone.zone_manager import ZoneManager

@@ -2,7 +2,6 @@
 import abc
 from datetime import datetime, time, timedelta
 
-from src.shared.enum.state import State
 from src.shared.timer.timer import Timer
 
 
@@ -15,11 +14,6 @@ class Base(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def on_time_out(self) -> None:
         """function called on timeout"""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def set_state(self, state: State) -> None:
-        """change state"""
         raise NotImplementedError
 
     def get_remaining_time(self) -> int:

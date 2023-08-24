@@ -1,7 +1,7 @@
 """object for config file"""
 from dataclasses import dataclass
 
-from src.I2C.dto.i2c_dto import I2CDto
+from src.i2c.dto.i2c_dto import I2CDto
 from src.electricMeter.dto.electric_meter_dto import ElectricMeterDto
 from src.network.api.dto.api_dto import ApiDto
 from src.network.dto.network_dto import NetworkDto

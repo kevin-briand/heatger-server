@@ -30,86 +30,68 @@ class Zone(Base):
         self.current_state = State.ECO
         self.current_mode = Mode.AUTO
         self.next_state = State.ECO
-        self.current_schedule = None
         self.pilot = Pilot(config.gpio_eco, config.gpio_frostfree, True)
         self.ping = Ping(self.zone_id, self.on_ip_found)
         self.is_ping = False
-        self.restore_state()
+        self.__restore_state()
 
-    def restore_state(self) -> None:
+    def __restore_state(self) -> None:
         """Restore state/mode after a device reboot"""
         self.current_state = Persistence().get_state(self.zone_id)
+
         mode = Persistence().get_mode(self.zone_id)
         if self.current_mode != mode:
             self.toggle_mode()
         else:
-            self.start_next_state()
-
-        current_schedule = self.get_current_and_next_schedule()[0]
-        if current_schedule is None:
-            return
+            self.start_next_timer()
 
         self.set_state(State.ECO)
-        if current_schedule.state == State.COMFORT:
+
+        next_schedule = self.get_next_schedule()
+        if next_schedule is not None and next_schedule.state == State.ECO:
             self.launch_ping()
 
     def toggle_mode(self) -> None:
         """Switch mode Auto <> Manual"""
         if self.current_mode == Mode.AUTO:
             self.current_mode = Mode.MANUAL
-            self.current_schedule = None
             self.timer.stop()
             self.is_ping = False
         else:
             self.current_mode = Mode.AUTO
-            self.start_next_state()
+            self.start_next_timer()
         Persistence().set_mode(self.zone_id, self.current_mode)
         Logs.info(self.zone_id, "Mode set to " + self.current_mode.name)
         if self.current_mode == Mode.AUTO:
-            self.restore_state()
+            self.__restore_state()
 
-    def start_next_state(self) -> None:
+    def start_next_timer(self) -> None:
         """Launch next timer (mode Auto)"""
         if self.current_mode != Mode.AUTO:
             return
-        current_schedule, next_schedule = self.get_current_and_next_schedule()
-        if current_schedule is None or next_schedule is None:
+        next_schedule = self.get_next_schedule()
+        if next_schedule is None:
             return
 
         remaining_time = self.get_remaining_time_from_schedule(next_schedule)
 
-        self.current_schedule = current_schedule
         self.next_state = next_schedule.state
         self.timer.start(remaining_time, self.on_time_out)
         Logs.info(self.zone_id, F'next timeout in {str(remaining_time)}s')
 
-    def get_current_and_next_schedule(self) -> list[Optional[ScheduleDto], Optional[ScheduleDto]]:
+    def get_next_schedule(self) -> Optional[ScheduleDto]:
         """get the current and next schedule in prog list"""
         zone_config = Config().get_zone(self.zone_id)
         list_schedules = zone_config.prog
         if list_schedules is None or len(list_schedules) == 0:
-            return [None, None]
+            return None
 
-        current_schedule: Optional[ScheduleDto] = None
         next_schedule: Optional[ScheduleDto] = None
-        now = datetime.now()
-
         for schedule in list_schedules:
             schedule_date = Zone.get_next_day(schedule.day, schedule.hour)
-            if schedule_date > now and schedule is not self.current_schedule:
-                if next_schedule is None or schedule_date < Zone.get_next_day(next_schedule.day, next_schedule.hour):
-                    next_schedule = schedule
-
-            if schedule_date <= now and (
-                    current_schedule is None or
-                    schedule_date > Zone.get_next_day(current_schedule.day, current_schedule.hour)):
-                current_schedule = schedule
-
-        if current_schedule is None:
-            current_schedule = list_schedules[len(list_schedules) - 1]
-        if next_schedule is None:
-            next_schedule = list_schedules[0]
-        return [current_schedule, next_schedule]
+            if next_schedule is None or schedule_date < Zone.get_next_day(next_schedule.day, next_schedule.hour):
+                next_schedule = schedule
+        return next_schedule
 
     @staticmethod
     def get_remaining_time_from_schedule(schedule: ScheduleDto) -> int:
@@ -150,8 +132,8 @@ class Zone(Base):
             self.set_state(self.next_state)
             self.ping.stop()
             self.is_ping = False
-        time.sleep(WAIT_TIME)  # wait 1sec before start next timer to avoid a loop
-        self.start_next_state()
+        time.sleep(WAIT_TIME)  # wait 1min before start next timer to avoid a loop
+        self.start_next_timer()
 
     def toggle_state(self) -> None:
         """Switch state Comfort <> Eco"""
@@ -165,7 +147,6 @@ class Zone(Base):
         if activate:
             if self.current_mode == Mode.AUTO:
                 self.toggle_mode()
-            self.current_schedule = None
             self.ping.stop()
             self.is_ping = False
             self.set_state(State.FROSTFREE)
@@ -175,6 +156,7 @@ class Zone(Base):
     def get_data(self) -> InfoZone:
         """return information zone in json object"""
         next_change = datetime.fromtimestamp(datetime.now().timestamp() + self.get_remaining_time())
+        next_change = next_change.replace(second=0, microsecond=0)
         if self.get_remaining_time() == -1:
             next_change = None
 
@@ -189,6 +171,6 @@ class Zone(Base):
     def get_zone_number(topic: str) -> int:
         """Return the zone number, else -1"""
         zone_number = re.search(REGEX_FIND_NUMBER, topic)
-        if zone_number is None:
+        if zone_number is None or not hasattr(Config().get_config(), f'{ZONE}{zone_number.group(0)}'):
             return -1
         return int(zone_number.group(0))

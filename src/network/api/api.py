@@ -1,14 +1,15 @@
 """API Client"""
 import os
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from waitress import serve
 
-from src.network.api.config.queries.ip_queries import ip_bp
-from src.network.api.config.queries.prog_queries import prog_bp
+from src.network.api.config.queries.ip.ip_queries import ip_bp
+from src.network.api.config.queries.prog.prog_queries import prog_bp
 from src.network.api.consts import CLASSNAME
-from src.network.api.login.login import login_bp
+from src.network.api.errors.api_error import ApiError
+from src.network.api.login.query.login_query import login_bp
 from src.network.api.middleware.middleware import Middleware
 from src.shared.logs.logs import Logs
 
@@ -28,6 +29,7 @@ class Api:
         os.chdir(this_files_dir)
         app.wsgi_app = Middleware(app.wsgi_app)
         CORS(app)
+        app.register_error_handler(ApiError, self.api_error)
 
         self.application = app
 
@@ -40,3 +42,8 @@ class Api:
         """Start flask API server"""
         Logs.info(CLASSNAME, 'Started')
         self.application.run(host='0.0.0.0')
+
+    @staticmethod
+    def api_error(error: ApiError):
+        """Return a json version of exception"""
+        return jsonify(error.to_dict()), error.status_code

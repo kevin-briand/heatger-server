@@ -16,6 +16,11 @@ class ScheduleDto:
         self.hour = hour
         self.state = state
 
+    def __eq__(self, other: 'ScheduleDto'):
+        if other is None:
+            return False
+        return self.to_value() == other.to_value()
+
     def is_valid_schedule(self) -> bool:
         """return True schedule is valid"""
         return 0 <= self.day <= 6 and isinstance(self.hour, time) and isinstance(self.state, State)
@@ -29,11 +34,6 @@ class ScheduleDto:
         return {'day': self.day,
                 'hour': self.hour,
                 'state': self.state.value}
-
-    def __eq__(self, other: 'ScheduleDto'):
-        if other is None:
-            return False
-        return self.to_value() == other.to_value()
 
     @staticmethod
     def from_array(data: list) -> list['ScheduleDto']:

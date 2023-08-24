@@ -7,7 +7,7 @@ from typing import Optional
 
 from paho.mqtt.client import MQTTMessage
 
-from src.I2C.i2c import I2C
+from src.i2c.i2c import I2C
 from src.localStorage.config.config import Config
 from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.network.mqtt.homeAssistant.consts import SWITCH_MODE, SWITCH_STATE, \
@@ -27,17 +27,19 @@ class ZoneManager(Thread, MqttImpl):
 
     def __init__(self):
         super().__init__()
+        MqttImpl.__init__(self)
         self.zones: list[Zone] = []
         self.frostfree: Optional[Frostfree] = None
         self.current_datas = {}
         self.network = Network()
         self.update_datas_timer = Timer()
+        self.mqtt_loop: Optional[Thread] = None
+        self.mqtt_stop_loop = False
         I2C().toggle_order = self.toggle_state
 
     def run(self) -> None:
         self.init_zones()
         self.init_frostfree()
-        self.frostfree.restore()
         self.init_mqtt_if_enabled()
 
     def init_zones(self) -> None:
@@ -52,8 +54,8 @@ class ZoneManager(Thread, MqttImpl):
         """Initialize zones from config file"""
         i = 1
         while getattr(Config().get_config(), F"{ZONE}{i}") is not None:
-            self.zones.append(Zone(i))
             Logs.info(F"{ZONE}{i}", F"Init Zone {i}")
+            self.zones.append(Zone(i))
             i += 1
 
     def init_frostfree(self) -> None:
@@ -68,7 +70,8 @@ class ZoneManager(Thread, MqttImpl):
                 self.network.mqtt.init_subscribe_zone(F"{ZONE}{i}")
             self.network.mqtt.init_subscribe_frostfree()
             self.network.mqtt.init_publish_frostfree()
-            Thread(target=self.refresh_datas_loop).start()
+            self.mqtt_loop = Thread(target=self.refresh_datas_loop)
+            self.mqtt_loop.start()
             self.subcribe_to_mqtt_on_message()
 
     def on_mqtt_message(self, message: MQTTMessage) -> None:
@@ -94,8 +97,9 @@ class ZoneManager(Thread, MqttImpl):
         if payload == '':
             Logs.error(CLASSNAME, F'{State.FROSTFREE} - empty data')
             return
-        end_date = datetime.strptime(payload, '%Y-%m-%dT%H:%M')
-        if end_date is None:
+        try:
+            end_date = datetime.strptime(payload, '%Y-%m-%dT%H:%M')
+        except ValueError:
             Logs.error(CLASSNAME, F'{State.FROSTFREE} - invalid date format')
             return
         if end_date > datetime.now():
@@ -107,9 +111,13 @@ class ZoneManager(Thread, MqttImpl):
         """switch heater state comfort<>eco"""
         self.zones[zone_number - 1].toggle_state()
 
+    def stop_datas_loop(self) -> None:
+        """Stop the mqtt datas loop"""
+        self.mqtt_stop_loop = True
+
     def refresh_datas_loop(self) -> None:
         """test if datas changed, if true, send new datas to MQTT and I2C class"""
-        while True:
+        while not self.mqtt_stop_loop:
             data = {}
             for zone in self.zones:
                 data.update(zone.get_data().to_object())

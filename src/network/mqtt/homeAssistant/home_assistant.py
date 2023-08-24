@@ -1,8 +1,8 @@
 """HomeAssistant class"""
 import time
 
-from src.I2C.consts import I2C
-from src.I2C.temperature.consts import TEMPERATURE, CELCIUS, PERCENT, HUMIDITY,\
+from src.i2c.consts import I2C
+from src.i2c.temperature.consts import TEMPERATURE, CELCIUS, PERCENT, HUMIDITY,\
     PRESSURE, HECTOPASCAL
 from src.electricMeter.consts import ELECTRIC_METER
 from src.localStorage.config.config import Config

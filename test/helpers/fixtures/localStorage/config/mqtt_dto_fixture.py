@@ -5,4 +5,4 @@ from src.network.mqtt.dto.mqtt_dto import MqttDto
 
 def mqtt_dto_fixture() -> MqttDto:
     fake = Faker()
-    return MqttDto(True, fake.ipv4(), fake.random.randint(5000, 8000), fake.name(), fake.name())
+    return MqttDto(True, '127.0.0.1', 1888, 'username', '')

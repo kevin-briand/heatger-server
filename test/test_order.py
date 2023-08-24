@@ -5,10 +5,11 @@ from src.shared.enum.state import State
 
 
 class TestOrders(unittest.TestCase):
-    """Test Orders enum"""
-    def test_to_order(self):
-        """Test to_order func"""
+    def test_to_state(self):
         self.assertEqual(State.to_state(0), State.COMFORT)
+
+    def test_unknown_state(self):
+        self.assertEqual(State.to_state(10), State.FROSTFREE)
 
 
 if __name__ == '__main__':

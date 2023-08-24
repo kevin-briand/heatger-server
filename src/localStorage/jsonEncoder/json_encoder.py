@@ -2,7 +2,7 @@
 import datetime
 from json import JSONEncoder
 
-from src.I2C.dto.device_dto import DeviceDto
+from src.i2c.dto.device_dto import DeviceDto
 from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
 

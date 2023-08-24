@@ -1,4 +1,4 @@
-from src.I2C.screen.dto.screen_dto import ScreenDto
+from src.i2c.screen.dto.screen_dto import ScreenDto
 from test.helpers.fixtures.localStorage.config.device_dto_fixture import device_dto_fixture
 
 
