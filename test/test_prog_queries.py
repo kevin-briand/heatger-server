@@ -1,51 +1,38 @@
 import json
-import os
 import unittest
 from unittest.mock import patch, Mock
 
 from src.localStorage.config.config import Config
 from src.localStorage.errors.local_storage_error import LocalStorageError
 from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
-from src.network.api.api import Api
-from src.network.api.middleware.middleware import Middleware
 from src.zone.dto.schedule_dto import ScheduleDto
-from test.helpers.fixtures.localStorage.config.config_dto_fixture import config_dto_fixture
 from test.helpers.fixtures.zone.schedule_dto_fixture import schedule_dto_fixture
+from test.helpers.patchs.api_patch import ApiPatch
+from test.helpers.patchs.config_patch import ConfigPatch
 
 
 class TestProgQueries(unittest.TestCase):
 
     def setUp(self):
-        self.app = Api()
-        self.client = self.app.application.test_client()
-        self.config = config_dto_fixture()
-        Config._initialised = False
-        self.middleware = patch.object(Middleware, 'check_auth', return_value=True)
-        self.middleware.start()
-        self.get_config = patch.object(Config, 'get_config', return_value=self.config)
-        self.get_config.start()
+        self.client = ApiPatch.start_patch(self)
+        ApiPatch.start_patch_middleware(self)
+        ConfigPatch.start_patch(self)
         self.get_config_return_error = patch.object(Config, 'get_config', Mock(side_effect=LocalStorageError('error')))
-        self.remove_file = patch('os.remove')
-        self.remove_file.start()
 
     def tearDown(self) -> None:
-        self.middleware.stop()
-        self.get_config.stop()
+        ApiPatch.stop_patch(self)
+        ConfigPatch.stop_patch(self)
         self.get_config_return_error.stop()
-        self.remove_file.stop()
-        path = os.path.dirname(__file__).split('test')[0]
-        if os.path.isfile(path + '/config.json'):
-            os.remove(path + '/config.json')
 
     def define_local_storage_should_return_error(self):
-        self.get_config.stop()
+        ConfigPatch.stop_patch(self)
         self.get_config_return_error.start()
 
     def test_get_prog(self):
         response = self.client.get('/prog/zone1')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), self.config.zone1.prog)
+        self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), [])
 
     def test_get_prog_not_found(self):
         response = self.client.get('/prog/zone3')
@@ -66,7 +53,7 @@ class TestProgQueries(unittest.TestCase):
         response = self.client.post('/prog/zone1', data=request_json, mimetype='application/json')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), self.config.zone1.prog)
+        self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), [schedule])
 
     def test_post_prog_not_found(self):
         response = self.client.post('/prog/zone3', json='')
@@ -91,12 +78,14 @@ class TestProgQueries(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_delete_prog(self):
-        schedule = self.config.zone1.prog[0]
+        schedule = schedule_dto_fixture()
+        Config().add_schedule('zone1', schedule)
+        self.assertEqual(Config().get_config().zone1.prog, [schedule])
 
         response = self.client.delete(f'/prog/zone1/{schedule.to_value()}')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), self.config.zone1.prog)
+        self.assertEqual(ScheduleDto.from_array(json.loads(response.data)), [])
 
     def test_delete_prog_not_found(self):
         schedule = schedule_dto_fixture()

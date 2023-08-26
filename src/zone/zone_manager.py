@@ -111,10 +111,6 @@ class ZoneManager(Thread, MqttImpl):
         """switch heater state comfort<>eco"""
         self.zones[zone_number - 1].toggle_state()
 
-    def stop_datas_loop(self) -> None:
-        """Stop the mqtt datas loop"""
-        self.mqtt_stop_loop = True
-
     def refresh_datas_loop(self) -> None:
         """test if datas changed, if true, send new datas to MQTT and I2C class"""
         while not self.mqtt_stop_loop:
@@ -136,3 +132,9 @@ class ZoneManager(Thread, MqttImpl):
     def refresh_i2c_datas(self) -> None:
         """Refresh I2C datas"""
         I2C().set_zones_datas_and_update_screen(self.current_datas)
+
+    def stop_loop(self):
+        self.mqtt_stop_loop = True
+        for zone in self.zones:
+            zone.stop_loop()
+        self.frostfree.stop_loop()

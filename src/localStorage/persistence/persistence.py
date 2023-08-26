@@ -22,7 +22,6 @@ class Persistence(LocalStorage):
     def __init__(self):
         if Persistence._initialized:
             return
-
         super().__init__('persist.json')
         try:
             self.persist = PersistenceDto(**self._read())

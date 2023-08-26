@@ -1,50 +1,29 @@
 import json
 import unittest
-from unittest.mock import patch, mock_open
 from uuid import uuid4
 
 from src.localStorage.config.config import Config
-from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.localStorage.persistence.persistence import Persistence
-from src.network.api.api import Api
-from test.helpers.fixtures.localStorage.config.config_dto_fixture import config_dto_fixture
-from test.helpers.fixtures.localStorage.persistence.persistence_dto_fixture import persistence_dto_fixture
+from test.helpers.patchs.api_patch import ApiPatch
+from test.helpers.patchs.config_patch import ConfigPatch
+from test.helpers.patchs.persistence_patch import PersistencePatch
 
 
 class TestLoginQueries(unittest.TestCase):
     persistence_datas: str = None
 
     def setUp(self):
-        self.app = Api()
-        self.client = self.app.application.test_client()
-        self.config = config_dto_fixture()
-        self.persistence = persistence_dto_fixture()
-        Config._initialised = False
-        TestLoginQueries.persistence_datas = json.dumps(self.persistence, cls=JsonEncoder)
-        self.open_file = patch('src.localStorage.local_storage.open', self.mock_open_file())
-        self.open_file.start()
-        self.get_config = patch.object(Config, 'get_config', return_value=self.config)
-        self.get_config.start()
-        self.set_token = patch.object(Persistence, 'set_api_token', side_effect=self.set_token)
-        self.set_token.start()
+        self.client = ApiPatch.start_patch(self)
+        PersistencePatch.start_patch(self)
+        ConfigPatch.start_patch(self)
 
     def tearDown(self) -> None:
-        self.get_config.stop()
-        self.open_file.stop()
-        self.set_token.stop()
-
-    @staticmethod
-    def mock_open_file():
-        mock_open_obj = mock_open()
-        mock_file_handle = mock_open_obj.return_value
-        mock_file_handle.read.return_value = TestLoginQueries.persistence_datas
-        return mock_open_obj
-
-    def set_token(self, token: str):
-        self.persistence.api_token = token
+        ApiPatch.stop_patch(self)
+        PersistencePatch.stop_patch(self)
+        ConfigPatch.stop_patch(self)
 
     def test_login(self):
-        user = json.dumps(self.config.api.__dict__)
+        user = json.dumps(Config().get_config().api.__dict__)
         response = self.client.post('/login', data=user, mimetype='application/json')
 
         self.assertEqual(response.status_code, 200)

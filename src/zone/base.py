@@ -36,3 +36,6 @@ class Base(metaclass=abc.ABCMeta):
         delta = timedelta(days=next_day)
         result = datetime.fromtimestamp(datetime.now().timestamp() + delta.total_seconds())
         return result.replace(hour=hour.hour, minute=hour.minute, second=0, microsecond=0)
+
+    def stop_loop(self):
+        self.timer.stop()

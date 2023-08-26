@@ -174,3 +174,9 @@ class Zone(Base):
         if zone_number is None or not hasattr(Config().get_config(), f'{ZONE}{zone_number.group(0)}'):
             return -1
         return int(zone_number.group(0))
+
+    def stop_loop(self):
+        if self.ping.is_running():
+            self.ping.stop()
+            self.ping.join()
+        super().stop_loop()

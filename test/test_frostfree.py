@@ -4,67 +4,41 @@ import unittest
 from datetime import datetime
 from threading import Thread
 from typing import Optional
-from unittest.mock import patch, mock_open
 
-from src.localStorage.config.config import Config
-from src.localStorage.persistence.dto.persistence_dto import PersistenceDto
 from src.localStorage.persistence.persistence import Persistence
 from src.shared.enum.state import State
 from src.zone.dto.info_frostfree import InfoFrostfree
 from src.zone.frostfree import Frostfree
 from src.zone.zone import Zone
-from test.helpers.fixtures.localStorage.config.config_dto_fixture import config_dto_fixture
-from test.helpers.fixtures.localStorage.persistence.persistence_dto_fixture import persistence_dto_fixture
+from test.helpers.patchs.config_patch import ConfigPatch
+from test.helpers.patchs.persistence_patch import PersistencePatch
+from test.helpers.patchs.zone_patch import ZonePatch
 
 ZONE1 = "zone1"
 
 
 class TestFrostFree(unittest.TestCase):
-    persistence_datas: Optional[PersistenceDto] = None
 
     def setUp(self):
-        TestFrostFree.persistence_datas = persistence_dto_fixture()
-        self.open_file = patch('src.localStorage.local_storage.open', self.mock_open_file())
-        self.open_file.start()
-        self.remove_file = patch('os.remove')
-        self.remove_file.start()
-
-        self.config_data = config_dto_fixture()
-        self.config_data.network.ip = []
-        self.config = patch.object(Config, 'get_config', return_value=self.config_data)
-        self.config.start()
+        ZonePatch.start_patch(self)
+        PersistencePatch.start_patch(self)
+        ConfigPatch.start_patch(self)
 
         self.thread = None
         self.zone: Optional[Zone] = None
         self.frostfree: Optional[Frostfree] = None
 
     def tearDown(self) -> None:
+        ZonePatch.stop_patch(self)
         if self.frostfree:
-            self.frostfree.timer.stop()
-            self.frostfree = None
-            self.thread.join()
+            self.frostfree.stop_loop()
         if self.zone:
-            self.zone.timer.stop()
-            self.zone = None
+            self.zone.stop_loop()
+        if self.thread:
             self.thread.join()
 
-        self.open_file.stop()
-        Persistence._initialized = False
-        TestFrostFree.persistence_datas = None
-        self.remove_file.stop()
-        self.config.stop()
-
-    @staticmethod
-    def mock_open_file():
-        mock_open_obj = mock_open()
-        mock_file_handle = mock_open_obj.return_value
-        mock_file_handle.read.return_value = TestFrostFree.persistence_datas
-        mock_file_handle.write.side_effect = TestFrostFree.write_persistence
-        return mock_open_obj
-
-    @staticmethod
-    def write_persistence(data):
-        TestFrostFree.persistence_datas = data
+        PersistencePatch.stop_patch(self)
+        ConfigPatch.stop_patch(self)
 
     def start_thread(self):
         self.thread = Thread(target=self.run_frostfree())

@@ -34,7 +34,6 @@ class LocalStorage:
             return json.loads(self.data)
 
         with open(self.path + self.filename, 'r', encoding='utf-8') as file:
-            file.seek(0)
             if not file.readable():
                 raise FileNotReadableError(self.filename)
             json_data = file.read()
@@ -50,6 +49,7 @@ class LocalStorage:
         with open(self.path + self.filename, 'w', encoding='utf-8') as file:
             if not file.writable():
                 raise FileNotWritableError(self.filename)
+            print('WRITE', data)
             file.write(json.dumps(data, indent=4, cls=JsonEncoder))
             self.data = json.dumps(data, indent=4, cls=JsonEncoder)
         self.is_write = False

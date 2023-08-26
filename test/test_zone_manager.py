@@ -3,77 +3,49 @@ import time
 import unittest
 from datetime import datetime
 from typing import Optional
-from unittest.mock import patch, mock_open, Mock
+from unittest.mock import patch, Mock
 
 import sys
 
 from paho.mqtt.client import MQTTMessage
 
+from src.localStorage.config.config import Config
 from src.network.mqtt.homeAssistant.consts import BUTTON_FROSTFREE, SWITCH_MODE, SWITCH_STATE
 from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
 from src.zone.consts import ZONE
 from test.helpers.fixtures.zone.schedule_dto_fixture import schedule_dto_fixture
+from test.helpers.patchs.config_patch import ConfigPatch
+from test.helpers.patchs.persistence_patch import PersistencePatch
 
 sys.modules['src.i2c.i2c'] = Mock()
 
-from src.localStorage.config.config import Config
-from src.localStorage.persistence.dto.persistence_dto import PersistenceDto
-from src.localStorage.persistence.persistence import Persistence
 from src.zone.zone_manager import ZoneManager
-from test.helpers.fixtures.localStorage.config.config_dto_fixture import config_dto_fixture
 from test.helpers.fixtures.localStorage.persistence.persistence_dto_fixture import persistence_dto_fixture
 
 
 class TestManager(unittest.TestCase):
-    persistence_datas: Optional[PersistenceDto] = None
 
     def setUp(self):
         TestManager.persistence_datas = persistence_dto_fixture()
-        self.open_file = patch('src.localStorage.local_storage.open', self.mock_open_file())
-        self.open_file.start()
-        self.remove_file = patch('os.remove')
-        self.remove_file.start()
+        PersistencePatch.start_patch(self)
+        ConfigPatch.start_patch(self)
         self.mqtt = patch('src.network.network.HomeAssistant')
         self.mqtt.start()
-
-        self.config_data = config_dto_fixture()
-        self.config_data.network.ip = []
-        self.config_data.i2c.enabled = False
-        self.config = patch.object(Config, 'get_config', return_value=self.config_data)
-        self.config.start()
+        self.gpio = patch('src.pilot.pilot.Gpio')
+        self.gpio.start()
 
         self.manager: Optional[ZoneManager] = None
 
     def tearDown(self) -> None:
         time.sleep(0.5)
-        if self.manager.frostfree:
-            self.manager.frostfree.timer.stop()
-        for zone in self.manager.zones:
-            if zone.ping.is_running():
-                zone.ping.stop()
-                zone.ping.join()
-            zone.timer.stop()
-        self.manager.stop_datas_loop()
-        self.manager.join()
-        self.open_file.stop()
-        Persistence._initialized = False
-        TestManager.persistence_datas = None
-        self.remove_file.stop()
+        if self.manager:
+            self.manager.stop_loop()
+            self.manager.join()
+        PersistencePatch.stop_patch(self)
+        ConfigPatch.stop_patch(self)
+        self.gpio.stop()
         self.mqtt.stop()
-        self.config.stop()
-
-    @staticmethod
-    def mock_open_file():
-        mock_open_obj = mock_open()
-        mock_file_handle = mock_open_obj.return_value
-        mock_file_handle.read.return_value = TestManager.persistence_datas
-        mock_file_handle.write.side_effect = TestManager.write_persistence
-        return mock_open_obj
-
-    @staticmethod
-    def write_persistence(data):
-        TestManager.persistence_datas = data
 
     def run_manager(self):
         self.manager = ZoneManager()
@@ -140,7 +112,7 @@ class TestManager(unittest.TestCase):
         self.assertEqual(self.manager.zones[0].current_mode, Mode.AUTO)
 
     def test_mqtt_switch_state(self):
-        self.config_data.zone1.prog = [schedule_dto_fixture(State.COMFORT)]
+        Config().add_schedule(F'{ZONE}1', schedule_dto_fixture(State.COMFORT))
         mqtt_message = self.create_mqtt_message(F'{ZONE}1_{SWITCH_STATE}')
 
         self.run_manager()

@@ -1,16 +1,14 @@
 import datetime
-import json
 import unittest
 from unittest.mock import mock_open, patch
 
 from faker import Faker
 
-from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
 from src.localStorage.persistence.persistence import Persistence
 from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
 from src.zone.dto.zone_persistence_dto import ZonePersistenceDto
-from test.helpers.fixtures.localStorage.persistence.persistence_dto_fixture import persistence_dto_fixture
+from test.helpers.patchs.persistence_patch import PersistencePatch
 
 ZONE_ID = "zone1"
 BAD_ZONE_ID = "zone3"
@@ -20,24 +18,10 @@ class TestPersistence(unittest.TestCase):
     persistence_datas: str = None
 
     def setUp(self) -> None:
-        Persistence._initialized = False
-        self.persistence = persistence_dto_fixture()
-        TestPersistence.persistence_datas = json.dumps(self.persistence, cls=JsonEncoder)
-        self.open_file = patch('src.localStorage.local_storage.open', self.mock_open_file())
-        self.open_file.start()
-        self.remove_file = patch('os.remove')
-        self.remove_file.start()
+        PersistencePatch().start_patch(self)
 
     def tearDown(self) -> None:
-        self.open_file.stop()
-        self.remove_file.stop()
-
-    @staticmethod
-    def mock_open_file():
-        mock_open_obj = mock_open()
-        mock_file_handle = mock_open_obj.return_value
-        mock_file_handle.read.return_value = TestPersistence.persistence_datas
-        return mock_open_obj
+        PersistencePatch.stop_patch(self)
 
     def test_get_state(self):
         state = Persistence().get_state(ZONE_ID)
@@ -67,7 +51,7 @@ class TestPersistence(unittest.TestCase):
 
     def test_get_api_token(self):
         token = Persistence().get_api_token()
-        result = self.persistence.api_token
+        result = Persistence().persist.api_token
 
         self.assertEqual(result, token)
 
@@ -100,13 +84,14 @@ class TestPersistence(unittest.TestCase):
         self.assertEqual(result, end_date)
 
     def test_persistence_file_not_exist(self):
-        Persistence._initialised = False
+        PersistencePatch.stop_patch(self)
+        Persistence._initialized = False
         mock_open_obj = mock_open()
-        mock_file_handle = mock_open_obj.return_value
-        mock_file_handle.read.return_value = ''
+        mock_open_obj.return_value.read.return_value = ''
 
         with patch('src.localStorage.local_storage.open', mock_open_obj()):
-            Persistence()
+            with patch('os.remove'):
+                Persistence()
 
         self.assertEqual(len(Persistence().persist.zones), 0)
 

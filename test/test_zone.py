@@ -4,7 +4,6 @@ import unittest
 from datetime import datetime
 from threading import Thread
 from typing import Optional
-from unittest.mock import patch, mock_open
 
 from src.localStorage.config.config import Config
 from src.localStorage.persistence.persistence import Persistence
@@ -13,60 +12,32 @@ from src.shared.enum.state import State
 from src.zone.dto.info_zone import InfoZone
 from src.zone.dto.schedule_dto import ScheduleDto
 from src.zone.zone import Zone
-from test.helpers.fixtures.localStorage.config.config_dto_fixture import config_dto_fixture
-from test.helpers.fixtures.localStorage.persistence.persistence_dto_fixture import persistence_dto_fixture
 from test.helpers.fixtures.zone.schedule_dto_fixture import schedule_dto_fixture
+from test.helpers.patchs.config_patch import ConfigPatch
+from test.helpers.patchs.persistence_patch import PersistencePatch
+from test.helpers.patchs.zone_patch import ZonePatch
 
 ZONE1 = "zone1"
 
 
 class TestZone(unittest.TestCase):
-    persistence_datas = None
 
     def setUp(self):
-        TestZone.persistence_datas = persistence_dto_fixture()
-        self.open_file = patch('src.localStorage.local_storage.open', self.mock_open_file())
-        self.open_file.start()
-        self.remove_file = patch('os.remove')
-        self.remove_file.start()
-        self.wait_time_const = patch('src.zone.zone.WAIT_TIME', return_value=1)
-        self.wait_time_const.start()
-
-        self.config_data = config_dto_fixture()
-        self.config_data.network.ip = []
-        self.config = patch.object(Config, 'get_config', return_value=self.config_data)
-        self.config.start()
+        PersistencePatch.start_patch(self)
+        ConfigPatch.start_patch(self)
+        ZonePatch.start_patch(self)
 
         self.thread = None
         self.zone: Optional[Zone] = None
 
     def tearDown(self) -> None:
         if self.zone:
-            if self.zone.ping.is_running():
-                self.zone.ping.stop()
-                self.zone.ping.join()
-            self.zone.timer.stop()
-            self.zone = None
-            self.thread.join()
+            self.zone.stop_loop()
+        self.zone = None
 
-        self.open_file.stop()
-        self.wait_time_const.stop()
-        Persistence._initialized = False
-        TestZone.persistence_datas = None
-        self.remove_file.stop()
-        self.config.stop()
-
-    @staticmethod
-    def mock_open_file():
-        mock_open_obj = mock_open()
-        mock_file_handle = mock_open_obj.return_value
-        mock_file_handle.read.return_value = TestZone.persistence_datas
-        mock_file_handle.write.side_effect = TestZone.write_persistence
-        return mock_open_obj
-
-    @staticmethod
-    def write_persistence(data):
-        TestZone.persistence_datas = data
+        ZonePatch.stop_patch(self)
+        PersistencePatch.stop_patch(self)
+        ConfigPatch.stop_patch(self)
 
     @staticmethod
     def ip_scan(ip: str):
@@ -82,6 +53,8 @@ class TestZone(unittest.TestCase):
         self.zone = Zone(1)
 
     def test_create_zone(self):
+        Config().add_schedules(ZONE1, [schedule_dto_fixture(), schedule_dto_fixture()])
+
         self.start_thread()
 
         self.assertGreater(self.zone.get_remaining_time(), 0)
@@ -98,13 +71,15 @@ class TestZone(unittest.TestCase):
         Persistence().set_state(ZONE1, State.COMFORT)
         now = datetime.now()
         next_hour = now.time().replace(hour=now.hour + 1)
-        self.config_data.zone1.prog = [ScheduleDto(now.weekday(), next_hour, State.ECO)]
+        Config().add_schedule(ZONE1, ScheduleDto(now.weekday(), next_hour, State.ECO))
 
         self.start_thread()
 
         self.assertEqual(self.zone.current_state, State.COMFORT)
 
     def test_toggle_mode(self):
+        Config().add_schedules(ZONE1, [schedule_dto_fixture(), schedule_dto_fixture()])
+
         self.start_thread()
         self.assertEqual(self.zone.current_mode, Mode.AUTO)
         self.assertGreater(self.zone.get_remaining_time(), 0)
@@ -127,8 +102,6 @@ class TestZone(unittest.TestCase):
         self.assertEqual(self.zone.get_remaining_time(), -1)
 
     def test_start_next_state_should_return_if_schedule_is_none(self):
-        self.config_data.zone1.prog = []
-
         self.start_thread()
         self.zone.start_next_timer()
 
@@ -140,7 +113,7 @@ class TestZone(unittest.TestCase):
         next_hour = now.time().replace(hour=now.hour + 1)
         past_schedule = ScheduleDto(now.weekday(), past_hour, State.COMFORT)
         next_schedule = ScheduleDto(now.weekday(), next_hour, State.ECO)
-        self.config_data.zone1.prog = [past_schedule, next_schedule]
+        Config().add_schedules(ZONE1, [past_schedule, next_schedule])
 
         self.start_thread()
         next_result = self.zone.get_next_schedule()
@@ -148,7 +121,7 @@ class TestZone(unittest.TestCase):
         self.assertEqual(next_result, next_schedule)
 
     def test_on_ip_found_should_not_change_state_if_not_is_ping(self):
-        self.config_data.zone1.prog = [schedule_dto_fixture(State.COMFORT)]
+        Config().add_schedule(ZONE1, schedule_dto_fixture(State.COMFORT))
 
         self.start_thread()
         self.zone.is_ping = False
@@ -157,7 +130,7 @@ class TestZone(unittest.TestCase):
         self.assertEqual(self.zone.current_state, State.ECO)
 
     def test_on_time_out_switch_to_comfort(self):
-        self.config_data.zone1.prog = [schedule_dto_fixture(State.COMFORT)]
+        Config().add_schedule(ZONE1, schedule_dto_fixture(State.COMFORT))
 
         self.start_thread()
         self.zone.on_time_out()
@@ -166,7 +139,7 @@ class TestZone(unittest.TestCase):
         self.assertEqual(self.zone.current_state, State.COMFORT)
 
     def test_on_time_out_switch_to_eco(self):
-        self.config_data.zone1.prog = [schedule_dto_fixture(State.ECO)]
+        Config().add_schedule(ZONE1, schedule_dto_fixture(State.ECO))
 
         self.start_thread()
         self.zone.on_time_out()
@@ -174,7 +147,7 @@ class TestZone(unittest.TestCase):
         self.assertEqual(self.zone.current_state, State.ECO)
 
     def test_toggle_state(self):
-        self.config_data.zone1.prog = [schedule_dto_fixture(State.ECO)]
+        Config().add_schedule(ZONE1, schedule_dto_fixture(State.ECO))
 
         self.start_thread()
         self.assertEqual(self.zone.current_state, State.COMFORT)
@@ -186,7 +159,7 @@ class TestZone(unittest.TestCase):
         self.assertEqual(self.zone.current_state, State.COMFORT)
 
     def test_activate_frostfree(self):
-        self.config_data.zone1.prog = [schedule_dto_fixture(State.COMFORT)]
+        Config().add_schedule(ZONE1, schedule_dto_fixture(State.COMFORT))
 
         self.start_thread()
         self.zone.set_frostfree(True)
@@ -203,7 +176,7 @@ class TestZone(unittest.TestCase):
         now = datetime.now()
         end_date = now.replace(second=0, microsecond=0)
         schedule = ScheduleDto(now.weekday(), end_date.time(), State.COMFORT)
-        self.config_data.zone1.prog = [schedule]
+        Config().add_schedule(ZONE1, schedule)
 
         self.start_thread()
         target_data = InfoZone(self.zone.zone_id, self.zone.name,
