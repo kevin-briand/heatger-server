@@ -4,10 +4,12 @@ import time
 from threading import Thread
 from typing import Optional, Callable
 
+from src.i2c.errors.read_write_error import ReadWriteError
 from src.i2c.io.enum.button import Button
 from src.i2c.io.enum.led_color import LedColor
 from src.i2c.io.pcf8574.pcf8574 import Pcf8574
 from src.i2c.screen.dto.zone_screen_dto import ZoneScreenDto
+from src.i2c.screen.enum.device import Device
 from src.i2c.screen.enum.vue import Vue
 from src.i2c.screen.screen import Screen
 from src.i2c.temperature.bme280.bme_280 import BME280
@@ -40,12 +42,15 @@ class I2C(Thread, MqttImpl):
         super().__init__()
         MqttImpl.__init__(self)
         self.run_loop = True
-        self.temperature_sensor = BME280()
-        self.io_device = Pcf8574()
+        if self.is_device_enabled(Device.TEMPERATURE):
+            self.temperature_sensor = BME280()
+        if self.is_device_enabled(Device.IO):
+            self.io_device = Pcf8574()
+        if self.is_device_enabled(Device.SCREEN):
+            self.screen_device = Screen()
         self.temperature: Optional[SensorDto] = None
         self.zones_datas = None
         self.network = Network()
-        self.screen_device = Screen()
         self.screen_need_update = False
         self.toggle_order: Optional[Callable[[int], None]] = None
         self.loop_iterations = 0
@@ -54,6 +59,16 @@ class I2C(Thread, MqttImpl):
         self.start()
         self.init_mqtt_data_update_loop_if_enabled()
         self._initialized = True
+
+    @staticmethod
+    def is_device_enabled(device: Device) -> bool:
+        i2c = Config().get_config().i2c
+        if device == Device.TEMPERATURE:
+            return i2c.temperature.enabled
+        elif device == Device.SCREEN:
+            return i2c.screen.enabled
+        elif device == Device.IO:
+            return i2c.io.enabled
 
     def init_mqtt_data_update_loop_if_enabled(self):
         """Initialise the loop for updating mqtt sensors"""
@@ -69,8 +84,9 @@ class I2C(Thread, MqttImpl):
         while True:
             if self.temperature is not None and data != self.temperature or self.force_refresh_mqtt_datas:
                 data = self.temperature
-                self.screen_device.set_temperature(data)
-                self.screen_need_update = True
+                if self.is_device_enabled(Device.SCREEN):
+                    self.screen_device.set_temperature(data)
+                    self.screen_need_update = True
                 self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, I2C_CONST),
                                         json.dumps(data, cls=JsonEncoder))
             time.sleep(0.5)
@@ -78,6 +94,8 @@ class I2C(Thread, MqttImpl):
     def set_zones_datas_and_update_screen(self, zones_datas) -> None:
         """Set the zones datas"""
         self.zones_datas = zones_datas
+        if not self.is_device_enabled(Device.SCREEN):
+            return
         self.screen_device.set_zone_info(ZoneScreenDto(State[zones_datas['zone1_state']],
                                                        State[zones_datas['zone2_state']],
                                                        zones_datas['zone1_name'],
@@ -89,36 +107,47 @@ class I2C(Thread, MqttImpl):
             return
         Logs.info(CLASSNAME, "loop started")
 
-        config_i2c = Config().get_config().i2c
-        if config_i2c.temperature.enabled:
+        if self.is_device_enabled(Device.TEMPERATURE):
             self.update_temperature()
 
+        error_counter = 0
+
         while self.run_loop:
-            self.check_io_status()
-            if self.loop_iterations == 60 and config_i2c.temperature.enabled:
-                self.update_temperature()
-            self.update_screen_if_needed()
-            self.loop_iterations += 1
-            time.sleep(0.1)
+            try:
+                self.check_io_status()
+                if self.loop_iterations == 60 and self.is_device_enabled(Device.TEMPERATURE):
+                    self.update_temperature()
+                self.update_screen_if_needed()
+                self.loop_iterations += 1
+                error_counter = 0
+                time.sleep(0.1)
+            except OSError:
+                if error_counter >= 3:
+                    Logs.error(CLASSNAME, "Fail to read/write, abort")
+                    raise ReadWriteError()
+                Logs.error(CLASSNAME, "Fail to read/write")
+                time.sleep(1)
+                error_counter += 1
 
     @staticmethod
     def is_all_i2c_devices_disabled() -> bool:
         """Return true if all i2c devices are disabled"""
-        config_i2c = Config().get_config().i2c
-        if not config_i2c.temperature.enabled \
-                and not config_i2c.io.enabled \
-                and not config_i2c.screen.enabled:
+        if not I2C.is_device_enabled(Device.TEMPERATURE) \
+                and not I2C.is_device_enabled(Device.IO) \
+                and not I2C.is_device_enabled(Device.SCREEN):
             return True
         return False
 
     def update_temperature(self) -> None:
         """get the temperature datas to the sensor"""
+        if self.is_device_enabled(Device.TEMPERATURE):
+            return
         self.temperature = self.temperature_sensor.get_values()
         self.reset_loop_iterations()
 
     def check_io_status(self) -> None:
         """Check io status and perform an action if changed"""
-        if not Config().get_config().i2c.io.enabled or self.zones_datas is None:
+        if not I2C.is_device_enabled(Device.IO) or self.zones_datas is None:
             return
 
         self.check_buttons_status()
@@ -157,7 +186,9 @@ class I2C(Thread, MqttImpl):
 
     def update_screen_if_needed(self) -> None:
         """update screen vue if screen_need_update is True"""
-        if self.screen_need_update and Config().get_config().i2c.screen.enabled:
+        if not I2C.is_device_enabled(Device.SCREEN):
+            return
+        if self.screen_need_update:
             self.screen_device.draw_vue_if_vars_is_not_none()
             self.screen_need_update = False
         if self.screen_device.get_current_vue() != Vue.GENERAL and self.loop_iterations == 59:

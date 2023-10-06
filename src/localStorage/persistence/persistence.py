@@ -6,6 +6,7 @@ from src.localStorage.persistence.dto.persistence_dto import PersistenceDto
 from src.localStorage.local_storage import LocalStorage
 from src.shared.enum.mode import Mode
 from src.shared.enum.state import State
+from src.shared.errors.file_empty_error import FileEmptyError
 from src.zone.dto.zone_persistence_dto import ZonePersistenceDto
 
 
@@ -25,7 +26,7 @@ class Persistence(LocalStorage):
         super().__init__('persist.json')
         try:
             self.persist = PersistenceDto(**self._read())
-        except TypeError:
+        except (TypeError, FileEmptyError):
             self.persist = PersistenceDto([], '', '')
             self.__save_in_file()
         Persistence._initialized = True

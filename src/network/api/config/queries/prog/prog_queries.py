@@ -9,7 +9,6 @@ prog_bp = Blueprint('prog', __name__)
 @prog_bp.get("/prog/<zone_id>")
 def get_prog(zone_id: str):
     """return an array of prog corresponding of zone"""
-    print("get")
     return ProgRequest.get_by_zone_id(zone_id)
 
 

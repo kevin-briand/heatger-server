@@ -22,5 +22,6 @@ sed -i "s/USER/$(whoami)/g" heatger.service
 sudo cp heatger.service /lib/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable heatger.service
+sudo setcap 'cap_net_raw+ep' /usr/bin/python3.9
 echo -e "${GREEN}reboot${NC}"
 sudo reboot

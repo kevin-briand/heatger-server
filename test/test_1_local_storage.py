@@ -34,7 +34,6 @@ class TestLocalStorage(unittest.TestCase):
         return mock_open_obj
 
     def test_create_file_if_not_exist(self):
-        print(os.path.isfile(self.path + self.filename))
         self.assertFalse(os.path.isfile(self.path + self.filename))
 
         LocalStorage(self.filename)

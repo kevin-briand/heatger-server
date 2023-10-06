@@ -1,8 +1,6 @@
 """Heatger main app"""
 import platform
 
-if platform.system().lower() != 'windows':
-    from src.i2c.i2c import I2C
 from src.network.api.api import Api
 from src.electricMeter.electric_meter import ElectricMeter
 from src.zone.zone_manager import ZoneManager
@@ -38,8 +36,6 @@ if __name__ == '__main__':
     zone_manager.start()
 
     em = ElectricMeter()
-    if platform.system().lower() != 'windows':
-        i2c = I2C()
 
     api = None
     if platform.system().lower() != 'windows':

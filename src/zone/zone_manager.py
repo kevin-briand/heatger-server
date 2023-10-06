@@ -35,7 +35,9 @@ class ZoneManager(Thread, MqttImpl):
         self.update_datas_timer = Timer()
         self.mqtt_loop: Optional[Thread] = None
         self.mqtt_stop_loop = False
-        I2C().toggle_order = self.toggle_state
+        if (Config().get_config().i2c.io.enabled or Config().get_config().i2c.screen.enabled
+                or Config().get_config().i2c.temperature.enabled):
+            I2C().toggle_order = self.toggle_state
 
     def run(self) -> None:
         self.init_zones()
@@ -131,7 +133,9 @@ class ZoneManager(Thread, MqttImpl):
 
     def refresh_i2c_datas(self) -> None:
         """Refresh I2C datas"""
-        I2C().set_zones_datas_and_update_screen(self.current_datas)
+        if (Config().get_config().i2c.io.enabled or Config().get_config().i2c.screen.enabled
+                or Config().get_config().i2c.temperature.enabled):
+            I2C().set_zones_datas_and_update_screen(self.current_datas)
 
     def stop_loop(self):
         self.mqtt_stop_loop = True

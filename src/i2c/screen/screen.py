@@ -1,11 +1,14 @@
 """Screen Class"""
+import time
 from typing import Optional
 
+from luma.core.error import DeviceNotFoundError
 from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
 
 from src.i2c.screen.dto.zone_screen_dto import ZoneScreenDto
 from src.i2c.screen.enum.vue import Vue
+from src.i2c.screen.errors.write_error import WriteError
 from src.i2c.screen.vues.general_vue import GeneralVue
 from src.i2c.screen.vues.set_order_vue import SetOrderVue
 from src.i2c.temperature.dto.sensor_dto import SensorDto
@@ -51,10 +54,19 @@ class Screen:
         """draw vue on the screen if temperature_info and zone_info is not None"""
         if not self.zone_info or not self.temperature_info:
             return
+        retry = 0
+        try:
+            if self.current_vue == Vue.GENERAL:
+                self.device.display(GeneralVue(self.zone_info, self.temperature_info).render())
+            if self.current_vue == Vue.SET_STATE_ZONE1:
+                self.device.display(SetOrderVue(self.zone_info.zone1_name, self.zone_info.zone1_state).render())
+            if self.current_vue == Vue.SET_STATE_ZONE2:
+                self.device.display(SetOrderVue(self.zone_info.zone2_name, self.zone_info.zone2_state).render())
+            retry = 0
+        except DeviceNotFoundError:
+            retry += 1
+            time.sleep(1)
+            if retry == 3:
+                raise WriteError()
+            self.draw_vue_if_vars_is_not_none()
 
-        if self.current_vue == Vue.GENERAL:
-            self.device.display(GeneralVue(self.zone_info, self.temperature_info).render())
-        if self.current_vue == Vue.SET_STATE_ZONE1:
-            self.device.display(SetOrderVue(self.zone_info.zone1_name, self.zone_info.zone1_state).render())
-        if self.current_vue == Vue.SET_STATE_ZONE2:
-            self.device.display(SetOrderVue(self.zone_info.zone2_name, self.zone_info.zone2_state).render())

@@ -12,7 +12,6 @@ class Pcf8574:
     """Reading a PCF8574 chip"""
 
     def __init__(self):
-        super().__init__()
         self.bus = pcf8574_io.PCF(Config().get_config().i2c.io.device.address)
         self.bus.pin_mode(PIN_LED_1_1, OUTPUT)
         self.bus.pin_mode(PIN_LED_1_2, OUTPUT)

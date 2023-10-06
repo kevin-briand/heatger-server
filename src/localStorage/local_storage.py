@@ -49,7 +49,6 @@ class LocalStorage:
         with open(self.path + self.filename, 'w', encoding='utf-8') as file:
             if not file.writable():
                 raise FileNotWritableError(self.filename)
-            print('WRITE', data)
             file.write(json.dumps(data, indent=4, cls=JsonEncoder))
             self.data = json.dumps(data, indent=4, cls=JsonEncoder)
         self.is_write = False
