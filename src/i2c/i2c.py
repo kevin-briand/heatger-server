@@ -122,11 +122,11 @@ class I2C(Thread, MqttImpl):
                 error_counter = 0
                 time.sleep(0.1)
             except OSError:
-                if error_counter >= 3:
+                if error_counter >= 10:
                     Logs.error(CLASSNAME, "Fail to read/write, abort")
                     raise ReadWriteError()
                 Logs.error(CLASSNAME, "Fail to read/write")
-                time.sleep(1)
+                time.sleep(1 * error_counter)
                 error_counter += 1
 
     @staticmethod
