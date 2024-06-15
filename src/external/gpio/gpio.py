@@ -9,6 +9,7 @@ from src.shared.logs.logs import Logs
 
 class Gpio:
     """Class for reading and writing GPIO header"""
+
     def __init__(self):
         if platform.system().lower() != WINDOWS:
             self.client = pigpio.pi()
@@ -18,7 +19,10 @@ class Gpio:
         if platform.system().lower() == WINDOWS:
             Logs.info(CLASSNAME, F'set pin : {str(addr)} to {"on" if status else "off"}')
             return
-        self.client.write(addr, status)
+        try:
+            self.client.write(addr, status)
+        except AttributeError:
+            Logs.error(CLASSNAME, F'Fail to setting pin, addr: {addr} - status: {status}')
 
     def get_pin(self, addr: int) -> int:
         """get GPIO pin state(0 or 1)"""

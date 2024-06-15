@@ -6,7 +6,7 @@ import time
 from src.localStorage.consts import CLASSNAME
 from src.localStorage.errors.file_not_readable_error import FileNotReadableError
 from src.localStorage.errors.file_not_writable_error import FileNotWritableError
-from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
+from src.localStorage.json_encoder.json_encoder import JsonEncoder
 from src.shared.errors.file_empty_error import FileEmptyError
 
 

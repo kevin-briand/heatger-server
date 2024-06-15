@@ -1,5 +1,4 @@
 """I2C manager"""
-import json
 import time
 from threading import Thread
 from typing import Optional, Callable
@@ -15,17 +14,13 @@ from src.i2c.screen.screen import Screen
 from src.i2c.temperature.bme280.bme_280 import BME280
 from src.i2c.temperature.dto.sensor_dto import SensorDto
 from src.localStorage.config.config import Config
-from src.localStorage.jsonEncoder.json_encoder import JsonEncoder
-from src.network.mqtt.homeAssistant.consts import PUBLISH_DATA_SENSOR, STATE_NAME
-from src.network.mqtt.mqtt_impl import MqttImpl
-from src.network.network import Network
-from src.i2c.consts import I2C as I2C_CONST, CLASSNAME, ZONE1, ZONE2
+from src.i2c.consts import CLASSNAME, ZONE1, ZONE2
 from src.shared.enum.state import State
 from src.shared.logs.logs import Logs
 from src.zone.consts import STATE
 
 
-class I2C(Thread, MqttImpl):
+class I2C(Thread):
     """I2C Manager class, run a event loop for update I2C devices"""
     _instance: Optional['I2C'] = None
     _initialized = False
@@ -40,7 +35,6 @@ class I2C(Thread, MqttImpl):
             return
 
         super().__init__()
-        MqttImpl.__init__(self)
         self.run_loop = True
         if self.is_device_enabled(Device.TEMPERATURE):
             self.temperature_sensor = BME280()
@@ -50,14 +44,12 @@ class I2C(Thread, MqttImpl):
             self.screen_device = Screen()
         self.temperature: Optional[SensorDto] = None
         self.zones_datas = None
-        self.network = Network()
         self.screen_need_update = False
         self.toggle_order: Optional[Callable[[int], None]] = None
         self.loop_iterations = 0
         self.led1_state = None
         self.led2_state = None
         self.start()
-        self.init_mqtt_data_update_loop_if_enabled()
         self._initialized = True
 
     @staticmethod
@@ -69,27 +61,6 @@ class I2C(Thread, MqttImpl):
             return i2c.screen.enabled
         elif device == Device.IO:
             return i2c.io.enabled
-
-    def init_mqtt_data_update_loop_if_enabled(self):
-        """Initialise the loop for updating mqtt sensors"""
-        if not Config().get_config().mqtt.enabled:
-            return
-        self.network.mqtt.init_publish_i2c()
-        Thread(target=self.refresh_mqtt_i2c_datas).start()
-        self.subcribe_to_mqtt_on_message()
-
-    def refresh_mqtt_i2c_datas(self) -> None:
-        """Refresh MQTT datas, send updated datas if necessary"""
-        data: Optional[SensorDto] = None
-        while True:
-            if self.temperature is not None and data != self.temperature or self.force_refresh_mqtt_datas:
-                data = self.temperature
-                if self.is_device_enabled(Device.SCREEN):
-                    self.screen_device.set_temperature(data)
-                    self.screen_need_update = True
-                self.refresh_mqtt_datas(PUBLISH_DATA_SENSOR.replace(STATE_NAME, I2C_CONST),
-                                        json.dumps(data, cls=JsonEncoder))
-            time.sleep(0.5)
 
     def set_zones_datas_and_update_screen(self, zones_datas) -> None:
         """Set the zones datas"""
@@ -122,7 +93,7 @@ class I2C(Thread, MqttImpl):
                 error_counter = 0
                 time.sleep(0.1)
             except OSError:
-                if error_counter >= 10:
+                if error_counter >= 30:
                     Logs.error(CLASSNAME, "Fail to read/write, abort")
                     raise ReadWriteError()
                 Logs.error(CLASSNAME, "Fail to read/write")
