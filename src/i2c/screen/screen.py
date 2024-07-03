@@ -5,6 +5,7 @@ from typing import Optional
 from luma.core.error import DeviceNotFoundError
 from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
+from smbus2 import SMBus
 
 from src.i2c.screen.dto.zone_screen_dto import ZoneScreenDto
 from src.i2c.screen.enum.vue import Vue
@@ -17,15 +18,15 @@ from src.localStorage.config.config import Config
 
 class Screen:
     """Initialise and manage a I2C screen"""
-    def __init__(self):
+    def __init__(self, bus: SMBus):
         device = Config().get_config().i2c.screen.device
-        self.serial = i2c(port=device.port, address=device.address)
+        self.serial = i2c(bus=bus, address=device.address)
         self.device = sh1106(self.serial)
         self.current_vue = Vue.GENERAL
         self.zone_info: Optional[ZoneScreenDto] = None
         self.temperature_info: Optional[SensorDto] = None
 
-    def set_temperature(self, temperature_info: SensorDto) -> None:
+    async def set_temperature(self, temperature_info: SensorDto) -> None:
         """set temperature_info"""
         self.temperature_info = temperature_info
 

@@ -1,36 +1,21 @@
 {
-  "mqtt": {
-    "enabled": false,
-    "host":"",
-    "port":0,
-    "username":"",
-    "password":""
-  },
-  "network": {
-    "enabled": false,
-    "ip": []
-  },
-  "api": {
-    "username": "admin",
-    "password": "password"
-  },
   "i2c": {
     "temperature": {
-      "enabled": true,
+      "enabled": false,
       "device": {
         "address": "0x76",
         "port": 1
       }
     },
     "screen": {
-      "enabled": true,
+      "enabled": false,
       "device": {
         "address": "0x3C",
         "port": 1
       }
     },
     "io": {
-      "enabled": true,
+      "enabled": false,
       "device": {
         "address": "0x20",
         "port": 1
@@ -43,18 +28,14 @@
       "gpio_input": 23
     }
   },
-  "zone1": {
-    "name": "",
-    "enabled": true,
-    "gpio_eco": 17,
-    "gpio_frostfree": 18,
-    "prog": []
-  },
-  "zone2": {
-    "name": "",
-    "enabled": true,
-    "gpio_eco": 27,
-    "gpio_frostfree": 22,
-    "prog": []
+  "zones": {
+    "zone1": {
+      "gpio_eco": 17,
+      "gpio_frostfree": 18
+    },
+    "zone2": {
+      "gpio_eco": 27,
+      "gpio_frostfree": 22
+    }
   }
 }

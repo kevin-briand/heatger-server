@@ -39,13 +39,17 @@ class Config(LocalStorage):
         """return True if the zone exist in the config file"""
         if zone_id is None:
             return False
-        return getattr(self.get_config(), zone_id, None) is not None
+        try:
+            self.get_config().zones[zone_id]
+        except KeyError:
+            return False
+        return True
 
     def get_zone(self, zone_id: str) -> ZoneDto:
         """return the ZoneDto corresponding to the zone_id"""
         if not self.__is_zone_exist(zone_id):
             raise ZoneNotFoundError(zone_id)
-        return getattr(self.get_config(), zone_id)
+        return self.get_config().zones[zone_id]
 
     def get_port(self) -> int:
         return self.get_config().ws_port if self.get_config().ws_port else 5000

@@ -23,3 +23,11 @@ class SensorDto:
         return self.temperature == other.temperature and \
             self.pressure == other.pressure and \
             self.humidity == other.humidity
+
+    def to_dict(self):
+        return {
+            'temperature': self.temperature,
+            'humidity': self.humidity,
+            'pressure': self.pressure
+        }
+

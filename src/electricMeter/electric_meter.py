@@ -1,4 +1,5 @@
 """ElectricMeter class"""
+import asyncio
 import json
 import time
 from threading import Thread
@@ -9,6 +10,7 @@ from src.electricMeter.consts import ELECTRIC_METER, CLASSNAME
 from src.external.gpio.consts import INPUT
 from src.external.gpio.gpio import Gpio
 from src.localStorage.config.config import Config
+from src.network.websocket.ws_server import WSServer
 from src.shared.logs.logs import Logs
 
 
@@ -23,21 +25,22 @@ class ElectricMeter(Thread):
         self.run_thread = True
         self.counter = 0
         self.gpio.init_pin(self.gpio_input, INPUT)
+        if not asyncio.get_event_loop():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        self.loop = asyncio.get_event_loop()
         self.start_if_enabled()
 
     def start_if_enabled(self) -> None:
         """Start electricity meter if enabled in the configuration file"""
         if Config().get_config().entry.electric_meter.enabled:
             self.start()
+            self.setup_ws()
             Logs.info(CLASSNAME, "Started !")
 
-    def setup_mqtt_if_enabled(self) -> None:
-        """Start mqtt sensor if is enabled in the config file"""
-        # if Config().get_config().mqtt.enabled:
-        #     self.network.mqtt.init_publish_electric_meter()
-        #     Thread(target=self.refresh_mqtt_datas_loop).start()
-        #     self.subcribe_to_mqtt_on_message()
-        pass
+    def setup_ws(self) -> None:
+        """Start send data if is enabled in the config file"""
+        Thread(target=self.refresh_ws_datas_loop).start()
 
     def run(self) -> None:
         while self.run_thread:
@@ -59,11 +62,8 @@ class ElectricMeter(Thread):
         """convert data to json"""
         return json.dumps({ELECTRIC_METER: self.counter})
 
-    # def refresh_mqtt_datas_loop(self) -> None:
-    #     """Refresh MQTT datas, send updated datas if necessary"""
-    #     last_counter_send: int = -1
-    #     while True:
-    #         if last_counter_send != self.counter or self.force_refresh_mqtt_datas:
-    #             last_counter_send = self.counter
-    #             self.refresh_mqtt_em_datas()
-    #         time.sleep(0.5)
+    def refresh_ws_datas_loop(self) -> None:
+        """Refresh WS datas, send updated datas if necessary"""
+        while True:
+            self.loop.run_until_complete(WSServer.update_electric_meter(self.counter))
+            time.sleep(30)
