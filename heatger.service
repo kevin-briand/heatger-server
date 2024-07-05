@@ -3,7 +3,7 @@ Description=Heatger service
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/USER/heatger/app.py
+ExecStart=/usr/bin/python3 /home/USER/heatger-server/app.py
 User=USER
 
 [Install]
